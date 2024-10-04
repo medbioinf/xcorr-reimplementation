@@ -1,1 +1,3 @@
 # xcorr-reimplementation
+
+python Comet.py LFQ_Orbitrap_DDA_Human_01.mzML uniprotkb_proteome_UP000005640-homo_sapiens-2023_05-nicer_headers.fasta
