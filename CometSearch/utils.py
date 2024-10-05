@@ -1,7 +1,7 @@
 from pyteomics import mass
 
 def masstocharge_to_dalton(mz : float, charge : int ):
-    return mz * charge - charge
+    return mz * charge - 1.00794 * charge
 
 def fragments(peptide, types=('b', 'y'), maxcharge=1):
     """

@@ -1,8 +1,5 @@
 from pyteomics import mzml, fasta, parser, auxiliary, mass
-from CometSearch.utils import fragments
-
-#precursorList/precursor/selectedIonList/selectedIon
-#MSn spectrum
+from CometSearch.utils import fragments, masstocharge_to_dalton
 
 def search(filename : str, database : str):
 
@@ -13,7 +10,6 @@ def search(filename : str, database : str):
             header = db_entry[0]
             sequence = db_entry[1]
             cleaved_sequence = parser.cleave(sequence, "trypsin", 1)
-            #print(header)
 
             for element in cleaved_sequence:
                 print(element)
@@ -22,15 +18,21 @@ def search(filename : str, database : str):
 
             db_entry = next(db, None)
 
-"""     with mzml.read(filename) as spectra:
+    with mzml.read(filename) as spectra:
         mzml_entry = next(spectra, None)
         while mzml_entry != None:
             if "MSn spectrum" in mzml_entry:
-                #print(mzml_entry)
+
                 #auxiliary.print_tree(mzml_entry)
-                print(mzml_entry["precursorList"]["precursor"][0]["selectedIonList"]["selectedIon"][0]["selected ion m/z"])
-                print("_________________________________________")
-            mzml_entry = next(spectra, None) """
+                m_z = mzml_entry["precursorList"]["precursor"][0]["selectedIonList"]["selectedIon"][0]["selected ion m/z"]
+                charge = mzml_entry["precursorList"]["precursor"][0]["selectedIonList"]["selectedIon"][0]["charge state"]
+
+                print(masstocharge_to_dalton(m_z, charge))
+
+            mzml_entry = next(spectra, None)
+
+
+
 
 
 
