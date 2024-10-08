@@ -164,4 +164,5 @@ cython_debug/
 # Bioinfo
 *.mzML
 *.fasta
-idee.md
+notizen.md
+loop tafel.jpg

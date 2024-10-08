@@ -8,52 +8,43 @@ def search(filename : str, database : str):
         for mzml_entry in spectra:
 
             if "MSn spectrum" in mzml_entry:
-
                 #auxiliary.print_tree(mzml_entry)
-                m_z = mzml_entry["precursorList"]["precursor"][0]["selectedIonList"]["selectedIon"][0]["selected ion m/z"]
-                charge = mzml_entry["precursorList"]["precursor"][0]["selectedIonList"]["selectedIon"][0]["charge state"]
-                mass_mzml = masstocharge_to_dalton(m_z, charge)
+                for precursor in mzml_entry["precursorList"]["precursor"]:
+                    if precursor["isolationWindow"]["ms level"] == 1:
+                        for sel_ion in precursor["selectedIonList"]["selectedIon"]:
 
-                print("____________________________")
-                print("mzml file entry mass:")
-                print(mass_mzml)
-                print("Found close masses in fasta:")
+                            m_z = sel_ion["selected ion m/z"]
+                            charge = sel_ion["charge state"]
+                            mass_mzml = masstocharge_to_dalton(m_z, charge)
 
-                with fasta.read(database) as db:
+                            print("____________________________")
+                            print("mzml file entry mass:")
+                            print(mass_mzml)
+                            print("Found close masses in fasta:")
+
+                            with fasta.read(database) as db:
                     
-                    for db_entry in db:
+                                for db_entry in db:
 
-                        header = db_entry[0]
-                        sequence = db_entry[1]
-                        cleaved_sequence = parser.cleave(sequence, "trypsin", 1)
+                                    header = db_entry[0]
+                                    sequence = db_entry[1]
+                                    cleaved_sequence = parser.cleave(sequence, "trypsin", 1)
 
-                        for element in cleaved_sequence:
+                                    for element in cleaved_sequence:
+                                        if "X" not in element:
 
+                                            temp = []
+                                            temp.append(mass.fast_mass(element))
+
+                                            if "M" in element:
+                                                temp.append(mass.fast_mass(element) + 15.994915)
+
+                                            if "C" in element:
+                                                temp.append(mass.fast_mass(element) + 57.021464)
+
+                                            for db_entry_mass in temp:
                     
-                            element = element.replace('X', '')
-                            db_entry_mass = mass.fast_mass(element)
-                    
-                            if tolerance_check(mass_mzml, db_entry_mass):
+                                                if tolerance_check(mass_mzml, db_entry_mass):
 
-                                print(element)
-                                print(db_entry_mass)
-
-                
-
-
-
-
-
-            
-
-
-
-        
-
-
-
-
-
-
-
-    
+                                                    print(element)
+                                                    print(db_entry_mass) 
