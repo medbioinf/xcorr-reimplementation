@@ -4,10 +4,10 @@ def masstocharge_to_dalton(mz : float, charge : int ):
     return mz * charge - 1.00794 * charge
 
 
-def tolerance_check(ref_mass : float, comp_mass : float):
+def tolerance_bounds(ref_mass : float):
     lower_bound = ref_mass - ref_mass * 0.00001
     upper_bound = ref_mass + ref_mass * 0.00001
-    return lower_bound <= comp_mass <= upper_bound
+    return (lower_bound, upper_bound)
 
 
 def fragments(peptide, types=('b', 'y'), maxcharge=1):

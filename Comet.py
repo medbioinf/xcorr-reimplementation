@@ -8,16 +8,16 @@ app = typer.Typer()
 @app.command()
 def comet(
     filename :str,
-    database : str, #Annotated[str, typer.P(help="to specify a sequence database, overriding entry in parameters file")],
+    database : str, 
+    processes : int
     ):
     """
     Comet in Python
     """
 
-    search(filename, database)
+    search(filename, database, processes)
 
 
-    
 if __name__ == "__main__":
     app()
 
