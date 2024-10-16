@@ -7,7 +7,7 @@ app = typer.Typer()
 
 @app.command()
 def comet(
-    experiment_filename :str,
+    sample_filename :str,
     protein_database : str, 
     processes : int,
     spectra : int
@@ -16,7 +16,7 @@ def comet(
     Comet in Python
     """
 
-    main(experiment_filename, protein_database, processes, spectra)
+    main(sample_filename, protein_database, processes, spectra)
 
 
 if __name__ == "__main__":

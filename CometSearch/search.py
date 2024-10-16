@@ -1,7 +1,7 @@
 import multiprocessing
 import time
 from pyteomics import mzml, fasta, parser, auxiliary, mass
-from CometSearch.utils import fragments, masstocharge_to_dalton, tolerance_bounds
+from CometSearch.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
 
 pept_index_unsorted = {}
 pept_list = []
@@ -17,8 +17,8 @@ def add_to_dict(element : str, element_mass : float):
 def xcorr():
     pass  
 
-def identification(mzml_entry, pep_index):
-    bounds = (-1, -1)
+def identification(mzml_entry, pep_index, list_length):
+
     if "MSn spectrum" in mzml_entry:
     #auxiliary.print_tree(mzml_entry)
         for precursor in mzml_entry["precursorList"]["precursor"]:
@@ -31,13 +31,27 @@ def identification(mzml_entry, pep_index):
                     charge = sel_ion["charge state"]
                     mass_mzml = masstocharge_to_dalton(m_z, charge)
                     lower, upper = tolerance_bounds(mass_mzml)
-                    bounds = (lower, upper)
 
-    return bounds
+                    lower_index = binary_search(pep_index, lower, list_length)
+
+                    if lower_index == -1:
+                        return None
+
+                    upper_index = binary_search(pep_index, upper, list_length)
+
+                    if upper_index == -1:
+                        upper_index = list_length
+                    else:
+                        upper_index = upper_index - 1
+
+                    pep_index_slice = pep_index[lower_index:upper_index]
+
+                    return pep_index_slice
+    return None
 
 
 
-def main(experiment_filename : str, protein_database : str, processes : int, spectra_amount : int):
+def main(sample_filename : str, protein_database : str, processes : int, spectra_amount : int):
 
     with fasta.read(protein_database) as db:
                     
@@ -48,16 +62,23 @@ def main(experiment_filename : str, protein_database : str, processes : int, spe
             cleaved_sequence = parser.cleave(sequence, "trypsin", 1)
 
             for element in cleaved_sequence:
+
                 if "X" not in element:
                     element_mass = mass.fast_mass(element)
 
                     add_to_dict(element, element_mass)
+                    m_count = element.count("M")
+                    
+                    if m_count != 0:
 
-                    if "M" in element:
-                        add_to_dict(element, element_mass + 15.994915)
+                        for cnt in range(min(m_count, 3)):
+                            add_to_dict(element, element_mass + (cnt * 15.994915)) #max 3 modified M
 
-                    if "C" in element:
-                        add_to_dict(element, element_mass + 57.021464)
+                    c_count = element.count("C")
+
+                    if c_count != 0:
+            
+                        add_to_dict(element, element_mass + (c_count * 57.021464)) #all C modified
 
         for peptmass, pepts in pept_index_unsorted.items():
             t = [peptmass]
@@ -66,7 +87,9 @@ def main(experiment_filename : str, protein_database : str, processes : int, spe
             pept_list.append(t)
 
         pept_list.sort(key=lambda x: x[0])
-
+        print("Peptide List created!")
+        
+    list_length = len(pept_list)
 
     manager = multiprocessing.Manager()
     pep_index = manager.list(pept_list) # <- peptide index
@@ -75,7 +98,7 @@ def main(experiment_filename : str, protein_database : str, processes : int, spe
 
 
     with multiprocessing.Pool(processes) as pool:
-        mzml_reader = mzml.read(experiment_filename)
+        mzml_reader = mzml.read(sample_filename)
 
         all_specs_read = False
 
@@ -89,7 +112,7 @@ def main(experiment_filename : str, protein_database : str, processes : int, spe
                     all_specs_read = True
 
             results = [
-                pool.apply_async(identification, args=(spec, pep_index))
+                pool.apply_async(identification, args=(spec, pep_index, list_length))
                 for spec in spec_buffer
             ]
 
