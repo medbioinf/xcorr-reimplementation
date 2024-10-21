@@ -17,7 +17,7 @@ PEPTIDE_MIN_LENGTH = 6
 PEPTIDE_MAX_LENGTH = 50
 MAX_MISSED_CLEAVAGES = 2
 
-def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, List[str]]]:
+def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     pept_index: DefaultDict[float, Set[str]] = defaultdict(set)
 
     with read_fasta(fasta_content) as fasta:
@@ -39,8 +39,8 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, List[str]]]:
                             pept_index[static_modified_pep_mass + (cnt * 15.994915)].add(peptide) # add modified M
 
     print("read done")
-    pept_index: List[Tuple[float, List[str]]] = [
-        (mass, list(peptides))
+    pept_index: List[Tuple[float, Tuple[str]]] = [
+        (mass, tuple(peptides))
         for mass, peptides in pept_index.items()
     ]
 

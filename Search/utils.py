@@ -36,7 +36,7 @@ def fragments(peptide, types=('b', 'y'), maxcharge=1):
                             peptide[i:], ion_type=ion_type, charge=charge)
                     
 
-def binary_search(pep_index, searched_mass, list_length):
+def binary_search(pep_index: List[Tuple[float, Tuple[str]]], searched_mass, list_length):
     """ 
     Returns the index of the first mass in the list that is >= searched mass, returns -1 if 
     all list entrys are < searched mass
