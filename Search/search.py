@@ -13,14 +13,16 @@ from pyteomics.fasta import read as read_fasta
 # internal imports
 from Search.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
 
-
+PEPTIDE_MIN_LENGTH = 6
+PEPTIDE_MAX_LENGTH = 50
+MAX_MISSED_CLEAVAGES = 2
 
 def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, List[str]]]:
     pept_index: Dict[float, Set[str]] = defaultdict(set)
 
     with read_fasta(fasta_content) as fasta:
         for (_, sequence) in fasta:
-            peptides = parser.cleave(sequence, "trypsin", 1)
+            peptides = parser.cleave(sequence, "trypsin", missed_cleavages=MAX_MISSED_CLEAVAGES, min_length=PEPTIDE_MIN_LENGTH, max_length=PEPTIDE_MAX_LENGTH)
             for peptide in peptides:
                 if "X" not in peptide:
                     pep_mass = mass.fast_mass(peptide)
