@@ -1,7 +1,8 @@
 import multiprocessing
 import time
 from pyteomics import mzml, fasta, parser, auxiliary, mass
-from CometSearch.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
+from Search.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
+
 
 pept_index_unsorted = {}
 pept_list = []
@@ -14,8 +15,7 @@ def add_to_dict(element : str, element_mass : float):
     else:
         pept_index_unsorted[element_mass] = [element]
 
-def xcorr():
-    pass  
+
 
 def identification(mzml_entry, pep_index, list_length):
 
@@ -52,7 +52,7 @@ def identification(mzml_entry, pep_index, list_length):
 
 
 def main(sample_filename : str, protein_database : str, processes : int, spectra_amount : int):
-
+    start = time.time()
     with fasta.read(protein_database) as db:
                     
         for db_entry in db:
@@ -87,7 +87,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
             pept_list.append(t)
 
         pept_list.sort(key=lambda x: x[0])
-        print("Peptide List created!")
+        print("Peptide Database List created!")
         
     list_length = len(pept_list)
 
@@ -97,7 +97,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     total_results = []
 
 
-    with multiprocessing.Pool(processes) as pool:
+    with multiprocessing.Pool(processes) as pool, open("output.txt", "w") as outfile:
         mzml_reader = mzml.read(sample_filename)
 
         all_specs_read = False
@@ -117,9 +117,12 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
             ]
 
             for result in results:
-                total_results.append(result.get())
-                
-    print(total_results)
+                res = result.get()
+                if res is not None:
+                    print(res, file=outfile)
+                    #total_results.append(res)
+    end = time.time()
+    print(end - start)
 
 
 

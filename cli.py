@@ -1,5 +1,5 @@
 import typer
-from CometSearch.search import main
+from Search.search import main
 from typing_extensions import Annotated
 
 
@@ -13,10 +13,10 @@ def comet(
     spectra : int
     ):
     """
-    Comet in Python
+    XCorr Reimplementation
     """
-
-    main(sample_filename, protein_database, processes, spectra)
+    if __name__ == "__main__":
+        main(sample_filename, protein_database, processes, spectra)
 
 
 if __name__ == "__main__":
