@@ -1,21 +1,57 @@
+# std import
+from collections import defaultdict
+import json
 import multiprocessing
+from pathlib import Path
 import time
-from pyteomics import mzml, fasta, parser, auxiliary, mass
+from typing import DefaultDict, Set, List, TextIO, Tuple
+
+# 3rd party import
+from pyteomics import mzml, parser, auxiliary, mass
+from pyteomics.fasta import read as read_fasta
+
+# internal imports
 from Search.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
 
+PEPTIDE_MIN_LENGTH = 6
+PEPTIDE_MAX_LENGTH = 50
+MAX_MISSED_CLEAVAGES = 2
 
-pept_index_unsorted = {}
-pept_list = []
+def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
+    pept_index: DefaultDict[float, Set[str]] = defaultdict(set)
 
+    with read_fasta(fasta_content) as fasta:
+        for (_, sequence) in fasta:
+            peptides = parser.cleave(sequence, "trypsin", missed_cleavages=MAX_MISSED_CLEAVAGES, min_length=PEPTIDE_MIN_LENGTH, max_length=PEPTIDE_MAX_LENGTH)
+            for peptide in peptides:
+                if "X" not in peptide:
+                    pep_mass = mass.fast_mass(peptide)
 
-def add_to_dict(element : str, element_mass : float):
+                    c_count = peptide.count("C")
+                    static_modified_pep_mass = pep_mass + (c_count * 57.021464)
+
+                    pept_index[static_modified_pep_mass].add(peptide) # add static modified sequence
+                    
+                    m_count = peptide.count("M")
+                    
+                    if m_count != 0:
+                        for cnt in range(min(m_count, 3)):
+                            pept_index[static_modified_pep_mass + (cnt * 15.994915)].add(peptide) # add modified M
+
+    print("read done")
+    pept_index: List[Tuple[float, Tuple[str]]] = [
+        (mass, tuple(peptides))
+        for mass, peptides in pept_index.items()
+    ]
+
+    print("conversion done")
+
+    pept_index.sort(key=lambda x: x[0])
+
+    print("sort done")
+
+    return pept_index
     
-    if element_mass in pept_index_unsorted and element not in pept_index_unsorted[element_mass]:
-        pept_index_unsorted[element_mass].append(element)
-    else:
-        pept_index_unsorted[element_mass] = [element]
-
-
 
 def identification(mzml_entry, pep_index, list_length):
 
@@ -53,41 +89,9 @@ def identification(mzml_entry, pep_index, list_length):
 
 def main(sample_filename : str, protein_database : str, processes : int, spectra_amount : int):
     start = time.time()
-    with fasta.read(protein_database) as db:
-                    
-        for db_entry in db:
-
-            header = db_entry[0]
-            sequence = db_entry[1]
-            cleaved_sequence = parser.cleave(sequence, "trypsin", 1)
-
-            for element in cleaved_sequence:
-
-                if "X" not in element:
-                    element_mass = mass.fast_mass(element)
-
-                    add_to_dict(element, element_mass)
-                    m_count = element.count("M")
-                    
-                    if m_count != 0:
-
-                        for cnt in range(min(m_count, 3)):
-                            add_to_dict(element, element_mass + (cnt * 15.994915)) #max 3 modified M
-
-                    c_count = element.count("C")
-
-                    if c_count != 0:
-            
-                        add_to_dict(element, element_mass + (c_count * 57.021464)) #all C modified
-
-        for peptmass, pepts in pept_index_unsorted.items():
-            t = [peptmass]
-            for pept in pepts:
-                t.append(pept)
-            pept_list.append(t)
-
-        pept_list.sort(key=lambda x: x[0])
-        print("Peptide Database List created!")
+    
+    with Path(protein_database).open("r", encoding="utf-8") as fasta_content:
+        pept_list = create_pept_index(fasta_content)
         
     list_length = len(pept_list)
 
