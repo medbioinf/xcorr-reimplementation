@@ -27,18 +27,16 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, List[str]]]:
                 if "X" not in peptide:
                     pep_mass = mass.fast_mass(peptide)
 
-                    pept_index[pep_mass].add(peptide) # add canonical peptide
+                    c_count = peptide.count("C")
+                    static_modified_pep_mass = pep_mass + (c_count * 57.021464)
+
+                    pept_index[static_modified_pep_mass].add(peptide) # add static modified sequence
+                    
                     m_count = peptide.count("M")
                     
                     if m_count != 0:
-
                         for cnt in range(min(m_count, 3)):
-                            pept_index[pep_mass + (cnt * 15.994915)].add(peptide) # add modified M
-
-                    c_count = peptide.count("C")
-
-                    if c_count != 0:
-                        pept_index[pep_mass + (c_count * 57.021464)].add(peptide) # add modified C
+                            pept_index[static_modified_pep_mass + (cnt * 15.994915)].add(peptide) # add modified M
 
     print("read done")
     pept_index: List[Tuple[float, List[str]]] = [
