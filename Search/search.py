@@ -4,7 +4,7 @@ import json
 import multiprocessing
 from pathlib import Path
 import time
-from typing import Dict, Set, List, TextIO, Tuple
+from typing import DefaultDict, Set, List, TextIO, Tuple
 
 # 3rd party import
 from pyteomics import mzml, parser, auxiliary, mass
@@ -18,7 +18,7 @@ PEPTIDE_MAX_LENGTH = 50
 MAX_MISSED_CLEAVAGES = 2
 
 def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, List[str]]]:
-    pept_index: Dict[float, Set[str]] = defaultdict(set)
+    pept_index: DefaultDict[float, Set[str]] = defaultdict(set)
 
     with read_fasta(fasta_content) as fasta:
         for (_, sequence) in fasta:
