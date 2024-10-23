@@ -9,9 +9,11 @@ from typing import DefaultDict, Set, List, TextIO, Tuple
 # 3rd party import
 from pyteomics import mzml, parser, auxiliary, mass
 from pyteomics.fasta import read as read_fasta
+from numpy import correlate
 
 # internal imports
 from Search.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
+from Search.xcorr import binning
 
 PEPTIDE_MIN_LENGTH = 6
 PEPTIDE_MAX_LENGTH = 50
@@ -56,11 +58,11 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
 def identification(mzml_entry, pep_index, list_length):
 
     if "MSn spectrum" in mzml_entry:
-    #auxiliary.print_tree(mzml_entry)
+        
         for precursor in mzml_entry["precursorList"]["precursor"]:
 
             if precursor["isolationWindow"]["ms level"] == 1:
-
+                #auxiliary.print_tree(mzml_entry)
                 for sel_ion in precursor["selectedIonList"]["selectedIon"]:
 
                     m_z = sel_ion["selected ion m/z"]
@@ -81,6 +83,18 @@ def identification(mzml_entry, pep_index, list_length):
                         upper_index = upper_index - 1
 
                     pep_index_slice = pep_index[lower_index:upper_index]
+
+                    mzml_mz_array = mzml_entry["m/z array"]
+                    mzml_intensity_array = mzml_entry["intensity array"]
+
+                    binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
+
+                    for pepts in pep_index_slice:
+
+                        for pep in pepts[1]:
+
+                            fasta_mz_array = list(fragments(pep, 5))
+                            binned_fasta_spectrum = binning(fasta_mz_array)
 
                     return pep_index_slice
     return None

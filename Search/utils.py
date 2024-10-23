@@ -1,6 +1,6 @@
 from pyteomics import mass
 import math
-from numpy import correlate
+
 
 def masstocharge_to_dalton(mz : float, charge : int ):
     """ 
@@ -36,7 +36,7 @@ def fragments(peptide, types=('b', 'y'), maxcharge=1):
                             peptide[i:], ion_type=ion_type, charge=charge)
                     
 
-def binary_search(pep_index: List[Tuple[float, Tuple[str]]], searched_mass, list_length):
+def binary_search(pep_index: list[tuple[float, tuple[str]]], searched_mass, list_length):
     """ 
     Returns the index of the first mass in the list that is >= searched mass, returns -1 if 
     all list entrys are < searched mass
@@ -64,12 +64,6 @@ def binary_search(pep_index: List[Tuple[float, Tuple[str]]], searched_mass, list
         
     return mid 
 
-
-test_list = [[0.14], [0.4598], [0.78888], [1.9807], [2.333333], [6.65948503], [58.5432345], [543.3454324543], 
-            [600.9999], [980.00009], [999.999], [1020.009], [1234.9089], [8999.8777], [9000.999]]
-             
-
-#print(binary_search(test_list, 0.009, len(test_list)))
 
 
 
