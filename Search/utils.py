@@ -1,5 +1,6 @@
 from pyteomics import mass
 import math
+import numpy
 
 
 def masstocharge_to_dalton(mz : float, charge : int ):
@@ -63,10 +64,6 @@ def binary_search(pep_index: list[tuple[float, tuple[str]]], searched_mass, list
             end = mid - 1
         
     return mid 
-
-
-
-
 
 
 

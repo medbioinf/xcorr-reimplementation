@@ -9,7 +9,8 @@ from typing import DefaultDict, Set, List, TextIO, Tuple
 # 3rd party import
 from pyteomics import mzml, parser, auxiliary, mass
 from pyteomics.fasta import read as read_fasta
-from numpy import correlate
+import numpy
+import scipy.sparse
 
 # internal imports
 from Search.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
@@ -87,16 +88,26 @@ def identification(mzml_entry, pep_index, list_length):
                     mzml_mz_array = mzml_entry["m/z array"]
                     mzml_intensity_array = mzml_entry["intensity array"]
 
-                    binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
+                    # print("mzml daten:")
+                    # print(mzml_mz_array)
+                    # print(mzml_intensity_array)
+                    # print("____________________")
+                    #binned_mzml_spectrum = binning(mzml_mz_array.tolist(), mzml_intensity_array.tolist())
 
                     for pepts in pep_index_slice:
 
                         for pep in pepts[1]:
 
-                            fasta_mz_array = list(fragments(pep, 5))
-                            binned_fasta_spectrum = binning(fasta_mz_array)
+                            fasta_mz_array = numpy.array(sorted(list(fragments(pep, maxcharge=5)), key = float))
+                            #fasta_mz_array = numpy.sort(numpy.array(list(fragments(pep, maxcharge=5)), key = float))
 
-                    return pep_index_slice
+                            # print("fasta daten:")
+                            # print(fasta_mz_array)
+                            # print("____________________")
+                    
+                            #binned_fasta_spectrum = binning(fasta_mz_array)
+                            #print(scipy.sparse.csr_array(numpy.correlate(binned_mzml_spectrum, binned_fasta_spectrum, mode="full")))
+
     return None
 
 
@@ -137,7 +148,8 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
             for result in results:
                 res = result.get()
                 if res is not None:
-                    print(res, file=outfile)
+                    pass
+                    #print(res, file=outfile)
                     #total_results.append(res)
     end = time.time()
     print(end - start)

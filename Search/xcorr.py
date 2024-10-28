@@ -1,37 +1,49 @@
-import numpy
+import numpy as np
+import scipy.sparse
+from decimal import *
+import math
 
-numpy.set_printoptions(threshold=numpy.inf)
+np.set_printoptions(threshold=np.inf, precision=10)
 
-def binning(mz_array, intensity_array=None, bin_width=0.02, maxvalue=10000):
+def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
 
-    bin_edges = []
-    edge = 0.0
+    if theo_spect == True:
 
-    while edge <= (mz_array[len(mz_array) - 1]):
-        bin_edges.append(edge)
-        edge = round(edge + bin_width, 4)
-
-    bins_filled = [0 for i in range(len(bin_edges))]
-
-    if intensity_array == None:
+        bins_filled = np.zeros(math.ceil(mz_array[len(mz_array) - 1] / bin_width) + 2)
 
         for mass in mz_array:
-            bins_filled[numpy.digitize(mass, bin_edges) - 1] = maxvalue
+            index = int(mass // bin_width) + 1
+            bins_filled[index] = 1
+            bins_filled[index - 1] = 0.5
+            bins_filled[index + 1] = 0.5
 
     else:
-        for mass in mz_array:
+        bins_filled = np.zeros(math.ceil(mz_array[len(mz_array) - 1] / bin_width))
 
-            edge_index = numpy.digitize(mass, bin_edges) - 1
-            int_array_index = mz_array.index(mass)
-            if bins_filled[edge_index] < intensity_array[int_array_index]:
-                bins_filled[edge_index] = intensity_array[int_array_index]
+        #Normalised intensity array 0-1
+        intensity_array = (intensity_array - np.min(intensity_array)) / (np.max(intensity_array)-np.min(intensity_array))
+
+        for mass, intensity in zip(mz_array, intensity_array):
+
+            index = int(mass // bin_width)
+            if bins_filled[index] < intensity:
+                bins_filled[index] = intensity
 
     return bins_filled
-
     
 
-mz_array = [0.001, 0.14, 0.4598, 0.78888, 1.9808, 1.9807, 2.333333, 10.0, 11.00001]
-int_array = [27, 0.4, 598, 9, 888, 8, 807, 10.9, 10.900001]
+
+# mz_array = np.array([0.001, 0.14, 0.4598, 0.78888, 1.9808, 1.9807, 2.333333, 10.0, 10.00001])
+# int_array = np.array([27, 0.4, 598, 9, 888, 8, 807, 10.9, 10.900001])
+
+# spect1 = binning(mz_array, int_array)
+# spect2 = binning(mz_array, theo_spect=1)
+
+# print(np.correlate(spect1, spect2, mode="full"))
+
+#print(binning(mz_array, theo_spect=1))
 
 
-#print(binning(mz_array))
+
+
+
