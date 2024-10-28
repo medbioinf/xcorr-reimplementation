@@ -88,11 +88,7 @@ def identification(mzml_entry, pep_index, list_length):
                     mzml_mz_array = mzml_entry["m/z array"]
                     mzml_intensity_array = mzml_entry["intensity array"]
 
-                    # print("mzml daten:")
-                    # print(mzml_mz_array)
-                    # print(mzml_intensity_array)
-                    # print("____________________")
-                    #binned_mzml_spectrum = binning(mzml_mz_array.tolist(), mzml_intensity_array.tolist())
+                    binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
 
                     for pepts in pep_index_slice:
 
@@ -100,13 +96,10 @@ def identification(mzml_entry, pep_index, list_length):
 
                             fasta_mz_array = numpy.array(sorted(list(fragments(pep, maxcharge=5)), key = float))
                             #fasta_mz_array = numpy.sort(numpy.array(list(fragments(pep, maxcharge=5)), key = float))
-
-                            # print("fasta daten:")
-                            # print(fasta_mz_array)
-                            # print("____________________")
                     
-                            #binned_fasta_spectrum = binning(fasta_mz_array)
-                            #print(scipy.sparse.csr_array(numpy.correlate(binned_mzml_spectrum, binned_fasta_spectrum, mode="full")))
+                            binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
+
+                            return numpy.correlate(binned_mzml_spectrum, binned_fasta_spectrum, mode="full")
 
     return None
 
@@ -149,7 +142,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
                 res = result.get()
                 if res is not None:
                     pass
-                    #print(res, file=outfile)
+                    print(res, file=outfile)
                     #total_results.append(res)
     end = time.time()
     print(end - start)

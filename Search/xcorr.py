@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.sparse
-from decimal import *
 import math
 
 np.set_printoptions(threshold=np.inf, precision=10)
