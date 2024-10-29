@@ -1,6 +1,4 @@
 from pyteomics import mass
-import math
-import numpy
 
 
 def masstocharge_to_dalton(mz : float, charge : int ):

@@ -1,3 +1,7 @@
-# xcorr-reimplementation
+# Xcorr-reimplementation
 
-python cli.py FILE DATABASE
+Peptide identification tool
+
+Usage:
+
+python cli.py FILE DATABASE PROCESSES SPECTRA
