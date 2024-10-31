@@ -35,15 +35,15 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
     
 
 
-mz_array = np.array([0.001, 0.14, 0.4598, 0.78888, 1.9808, 1.9807, 2.333333, 10.0])
+# mz_array = np.array([0.001, 0.14, 0.4598, 0.78888, 1.9808, 1.9807, 2.333333, 10.0])
 # int_array = np.array([27, 0.4, 598, 9, 888, 8, 807, 10.9])
 
-# # # # spect1 = binning(mz_array, int_array)
-# # # # spect2 = binning(mz_array, theo_spect=1)
+# spect1 = binning(mz_array, int_array)
+# spect2 = binning(mz_array, theo_spect=1)
 
-# # # # print(np.correlate(spect1, spect2, mode="full"))
-# print(binning(mz_array, theo_spect=True))
-# # print(np.round((mz_array - np.min(mz_array)) / (np.max(mz_array)-np.min(mz_array)), 8))
+# print(np.correlate(mz_array, int_array, mode="full"))
+#print(binning(mz_array, theo_spect=True))
+# print(np.round((mz_array - np.min(mz_array)) / (np.max(mz_array)-np.min(mz_array)), 8))
 
 
 

@@ -78,7 +78,7 @@ def identification(mzml_entry, pep_index, list_length):
                     upper_index = binary_search(pep_index, upper, list_length)
 
                     if upper_index == -1:
-                        upper_index = list_length
+                        upper_index = list_length - 1
                     else:
                         upper_index = upper_index - 1
 
@@ -94,7 +94,7 @@ def identification(mzml_entry, pep_index, list_length):
                         for pep in pepts[1]:
 
                             fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=5)), key = float))
-                            #fasta_mz_array = numpy.sort(numpy.array(list(fragments(pep, maxcharge=5)), key = float))
+                            #fasta_mz_array = np.sort(np.array(list(fragments(pep, maxcharge=5)), key = float))
                     
                             binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
 
