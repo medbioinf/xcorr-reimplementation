@@ -14,6 +14,7 @@ import numpy as np
 # internal imports
 from Search.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
 from Search.binning import binning
+from Search.predicted_spect import predict_spectrum
 
 PEPTIDE_MIN_LENGTH = 6
 PEPTIDE_MAX_LENGTH = 50
@@ -55,7 +56,7 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     return pept_index
     
 
-def identification(mzml_entry, pep_index, list_length):
+def identification(mzml_entry, pep_index, list_length, predict_spect):
 
     if "MSn spectrum" in mzml_entry:
         
@@ -93,12 +94,17 @@ def identification(mzml_entry, pep_index, list_length):
 
                         for pep in pepts[1]:
 
-                            fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=5)), key = float))
-                            #fasta_mz_array = np.sort(np.array(list(fragments(pep, maxcharge=5)), key = float))
-                    
-                            binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
+                            if predict_spect:
 
-                            cross_corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, mode="full")
+                                fasta_mz_array, fasta_int_array = predict_spectrum(pep)
+                                binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
+                                cross_corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, mode="full")
+
+                            else:
+                                fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=3)), key = float))
+                                #fasta_mz_array = np.sort(np.array(list(fragments(pep, maxcharge=5)), key = float))
+                                binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
+                                cross_corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, mode="full")
 
                             max_val = cross_corr.max()
                             second_max_val = np.partition(cross_corr.flatten(), -2)[-2]
@@ -111,7 +117,7 @@ def identification(mzml_entry, pep_index, list_length):
 
 
 
-def main(sample_filename : str, protein_database : str, processes : int, spectra_amount : int):
+def main(sample_filename : str, protein_database : str, processes : int, spectra_amount : int, predict_spect : bool):
     start = time.time()
     
     with Path(protein_database).open("r", encoding="utf-8") as fasta_content:
@@ -142,7 +148,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
                     all_specs_read = True
 
             results = [
-                pool.apply_async(identification, args=(spec, pep_index, list_length))
+                pool.apply_async(identification, args=(spec, pep_index, list_length, predict_spect))
                 for spec in spec_buffer
             ]
 
