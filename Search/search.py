@@ -19,6 +19,7 @@ from Search.predicted_spect import predict_spectrum
 PEPTIDE_MIN_LENGTH = 6
 PEPTIDE_MAX_LENGTH = 50
 MAX_MISSED_CLEAVAGES = 2
+SHIFT = 75
 
 def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     pept_index: DefaultDict[float, Set[str]] = defaultdict(set)
@@ -63,7 +64,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
         for precursor in mzml_entry["precursorList"]["precursor"]:
 
             if precursor["isolationWindow"]["ms level"] == 1:
-                #auxiliary.print_tree(mzml_entry)
+
                 for sel_ion in precursor["selectedIonList"]["selectedIon"]:
 
                     m_z = sel_ion["selected ion m/z"]
@@ -98,20 +99,35 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
 
                                 fasta_mz_array, fasta_int_array = predict_spectrum(pep)
                                 binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
-                                cross_corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, mode="full")
+
 
                             else:
                                 fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=3)), key = float))
-                                #fasta_mz_array = np.sort(np.array(list(fragments(pep, maxcharge=5)), key = float))
                                 binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
-                                cross_corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, mode="full")
 
-                            max_val = cross_corr.max()
-                            second_max_val = np.partition(cross_corr.flatten(), -2)[-2]
 
-                            xcorr_score = max_val - second_max_val
+                            mzml_bins_size = binned_mzml_spectrum.size
+                            fasta_bins_size = binned_fasta_spectrum.size
 
-                            return xcorr_score
+                            if mzml_bins_size < fasta_bins_size:
+
+                                binned_mzml_spectrum = np.append(binned_mzml_spectrum, np.zeros(fasta_bins_size-mzml_bins_size))
+
+                            elif fasta_bins_size < mzml_bins_size:
+
+                                binned_fasta_spectrum = np.append(binned_fasta_spectrum, np.zeros(mzml_bins_size-fasta_bins_size))
+
+                            #Append shift size on one of the arrays for shift
+
+                            binned_mzml_spectrum = np.insert(binned_mzml_spectrum, 0, np.zeros(SHIFT))
+                            binned_mzml_spectrum = np.append(binned_mzml_spectrum, np.zeros(SHIFT))
+
+                            corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, "valid")
+
+                            mean_corr = np.mean(corr)
+                            zeroshift_corr = corr[corr.size - 1]
+
+                            return zeroshift_corr - mean_corr #actual xcorr score
                         
     return None
 
@@ -157,7 +173,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
                 if res is not None:
 
                     print(res, file=outfile)
-                    #total_results.append(res)
+
     end = time.time()
     print(end - start)
 
