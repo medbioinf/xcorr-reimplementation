@@ -30,12 +30,5 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
                 bins_filled[index] = intensity
 
     return bins_filled
-    
-
-
-
-
-
-
 
 

@@ -125,9 +125,9 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
                             corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, "valid")
 
                             mean_corr = np.mean(corr)
-                            zeroshift_corr = corr[corr.size - 1]
+                            zeroshift_corr = corr[(corr.size // 2)]
 
-                            return zeroshift_corr - mean_corr #actual xcorr score
+                            return zeroshift_corr - mean_corr # Xcorr score
                         
     return None
 
