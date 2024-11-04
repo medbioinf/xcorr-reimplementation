@@ -22,6 +22,9 @@ MAX_MISSED_CLEAVAGES = 2
 SHIFT = 75
 
 def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
+
+    print("Creating Peptide Index...")
+    
     pept_index: DefaultDict[float, Set[str]] = defaultdict(set)
 
     with read_fasta(fasta_content) as fasta:
@@ -67,8 +70,12 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
 
                 for sel_ion in precursor["selectedIonList"]["selectedIon"]:
 
+                    #auxiliary.print_tree(mzml_entry)
+
+                    spect_id = mzml_entry["index"]
                     m_z = sel_ion["selected ion m/z"]
                     charge = sel_ion["charge state"]
+
                     mass_mzml = masstocharge_to_dalton(m_z, charge)
                     lower, upper = tolerance_bounds(mass_mzml)
 
@@ -90,6 +97,10 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
                     mzml_intensity_array = mzml_entry["intensity array"]
 
                     binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
+                    mzml_bins_size = binned_mzml_spectrum.size
+
+
+                    xcorr_scores = [spect_id, []]
 
                     for pepts in pep_index_slice:
 
@@ -100,13 +111,10 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
                                 fasta_mz_array, fasta_int_array = predict_spectrum(pep)
                                 binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
 
-
                             else:
                                 fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=3)), key = float))
                                 binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
 
-
-                            mzml_bins_size = binned_mzml_spectrum.size
                             fasta_bins_size = binned_fasta_spectrum.size
 
                             if mzml_bins_size < fasta_bins_size:
@@ -127,7 +135,9 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
                             mean_corr = np.mean(corr)
                             zeroshift_corr = corr[(corr.size // 2)]
 
-                            return zeroshift_corr - mean_corr # Xcorr score
+                            xcorr_scores[1].append(zeroshift_corr - mean_corr)  # Xcorr score
+                    
+                    return xcorr_scores
                         
     return None
 
@@ -175,7 +185,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
                     print(res, file=outfile)
 
     end = time.time()
-    print(end - start)
+    print("Execution Time: ", end - start)
 
 
 

@@ -2,7 +2,7 @@ import typer
 from Search.search import main
 from typing_extensions import Annotated
 from os import cpu_count
-
+from wakepy import keep
 
 app = typer.Typer()
 
@@ -18,7 +18,8 @@ def cli(
     XCorr Reimplementation
     """
     if __name__ == "__main__":
-        main(sample_filename, protein_database, p, s, ps)
+        with keep.presenting():
+            main(sample_filename, protein_database, p, s, ps)
 
 
 if __name__ == "__main__":
