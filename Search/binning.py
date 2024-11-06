@@ -21,8 +21,9 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
 
     else:
         #Normalised intensity array 0-1
-        intensity_array = (intensity_array - np.min(intensity_array)) / (np.max(intensity_array)-np.min(intensity_array))
-
+        #intensity_array = (intensity_array - np.min(intensity_array)) / (np.max(intensity_array)-np.min(intensity_array)) 
+        intensity_array = intensity_array  / np.max(intensity_array)
+        
         for mass, intensity in zip(mz_array, intensity_array):
 
             index = int(mass // bin_width)

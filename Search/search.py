@@ -1,15 +1,16 @@
 # std import
 from collections import defaultdict
-import json
 import multiprocessing
 from pathlib import Path
 import time
 from typing import DefaultDict, Set, List, TextIO, Tuple
+import re
 
 # 3rd party import
 from pyteomics import mzml, parser, auxiliary, mass
 from pyteomics.fasta import read as read_fasta
 import numpy as np
+import pandas as pd
 
 # internal imports
 from Search.utils import fragments, masstocharge_to_dalton, tolerance_bounds, binary_search
@@ -60,19 +61,20 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     return pept_index
     
 
-def identification(mzml_entry, pep_index, list_length, predict_spect):
+def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
-    if "MSn spectrum" in mzml_entry:
+    if mzml_entry["ms level"] == 2:
+        #auxiliary.print_tree(mzml_entry)
+        spect_id = mzml_entry["id"]
+        scan = int(spect_id.split("scan=")[1])
+        #scan = int(re.search("scan=\d+", spect_id).group(0)[5:])
         
-        for precursor in mzml_entry["precursorList"]["precursor"]:
+        if scan in scanlist:
 
-            if precursor["isolationWindow"]["ms level"] == 1:
+            for precursor in mzml_entry["precursorList"]["precursor"]:
 
                 for sel_ion in precursor["selectedIonList"]["selectedIon"]:
 
-                    #auxiliary.print_tree(mzml_entry)
-
-                    spect_id = mzml_entry["index"]
                     m_z = sel_ion["selected ion m/z"]
                     charge = sel_ion["charge state"]
 
@@ -98,9 +100,12 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
 
                     binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
                     mzml_bins_size = binned_mzml_spectrum.size
+                    
+                    #Append shift size on one of the arrays for shift
+                    binned_mzml_spectrum = np.insert(binned_mzml_spectrum, 0, np.zeros(int(SHIFT / 0.02)))
+                    binned_mzml_spectrum = np.append(binned_mzml_spectrum, np.zeros(int(SHIFT / 0.02)))
 
-
-                    xcorr_scores = [spect_id, []]
+                    xcorr_scores = []
 
                     for pepts in pep_index_slice:
 
@@ -108,34 +113,33 @@ def identification(mzml_entry, pep_index, list_length, predict_spect):
 
                             if predict_spect:
 
-                                fasta_mz_array, fasta_int_array = predict_spectrum(pep)
+                                fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge)
                                 binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
 
                             else:
-                                fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=3)), key = float))
+                                fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=charge)), key = float))
                                 binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
 
                             fasta_bins_size = binned_fasta_spectrum.size
 
                             if mzml_bins_size < fasta_bins_size:
 
-                                binned_mzml_spectrum = np.append(binned_mzml_spectrum, np.zeros(fasta_bins_size-mzml_bins_size))
+                                binned_fasta_spectrum = binned_fasta_spectrum[:mzml_bins_size]
 
                             elif fasta_bins_size < mzml_bins_size:
 
                                 binned_fasta_spectrum = np.append(binned_fasta_spectrum, np.zeros(mzml_bins_size-fasta_bins_size))
-
-                            #Append shift size on one of the arrays for shift
-
-                            binned_mzml_spectrum = np.insert(binned_mzml_spectrum, 0, np.zeros(SHIFT))
-                            binned_mzml_spectrum = np.append(binned_mzml_spectrum, np.zeros(SHIFT))
+            
 
                             corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, "valid")
 
                             mean_corr = np.mean(corr)
                             zeroshift_corr = corr[(corr.size // 2)]
 
-                            xcorr_scores[1].append(zeroshift_corr - mean_corr)  # Xcorr score
+                            xcorr_scores.append(zeroshift_corr - mean_corr)  # Xcorr score
+                            print(scan, zeroshift_corr - mean_corr, pep)
+
+                            xcorr_scores.append((scan, zeroshift_corr - mean_corr, pep, binned_mzml_spectrum, binned_fasta_spectrum))
                     
                     return xcorr_scores
                         
@@ -158,6 +162,8 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
 
     total_results = []
 
+    smallindex = pd.read_table("smallindex.txt", sep=' ')
+    scanlist = [scan for scan in smallindex['scan']]
 
     with multiprocessing.Pool(processes) as pool, open("output.txt", "w") as outfile:
         mzml_reader = mzml.read(sample_filename)
@@ -174,7 +180,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
                     all_specs_read = True
 
             results = [
-                pool.apply_async(identification, args=(spec, pep_index, list_length, predict_spect))
+                pool.apply_async(identification, args=(spec, pep_index, list_length, predict_spect, scanlist))
                 for spec in spec_buffer
             ]
 

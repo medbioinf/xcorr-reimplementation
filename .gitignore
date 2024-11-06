@@ -166,3 +166,4 @@ cython_debug/
 *.fasta
 notizen.md
 output.txt
+!small.fasta
