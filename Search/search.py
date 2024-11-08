@@ -5,6 +5,7 @@ from pathlib import Path
 import time
 from typing import DefaultDict, Set, List, TextIO, Tuple
 import re
+import matplotlib.pyplot as plt
 
 # 3rd party import
 from pyteomics import mzml, parser, auxiliary, mass
@@ -136,11 +137,17 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             mean_corr = np.mean(corr)
                             zeroshift_corr = corr[(corr.size // 2)]
 
-                            xcorr_scores.append(zeroshift_corr - mean_corr)  # Xcorr score
                             print(scan, zeroshift_corr - mean_corr, pep)
 
-                            xcorr_scores.append((scan, zeroshift_corr - mean_corr, pep, binned_mzml_spectrum, binned_fasta_spectrum))
-                    
+                            xcorr_scores.append([scan, zeroshift_corr - mean_corr, pep, binned_mzml_spectrum, binned_fasta_spectrum])  # Xcorr score
+
+                            if scan == 118844:
+                                plt.figure(dpi=1200)
+                                plt.plot(binned_mzml_spectrum, linewidth=0.2)    
+                                plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.2)                          
+                                #plt.show()
+                                plt.savefig("scan_118844.png")
+
                     return xcorr_scores
                         
     return None
