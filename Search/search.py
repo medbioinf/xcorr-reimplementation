@@ -141,12 +141,12 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             xcorr_scores.append([scan, zeroshift_corr - mean_corr, pep, binned_mzml_spectrum, binned_fasta_spectrum])  # Xcorr score
 
-                            if scan == 118844:
-                                plt.figure(dpi=1200)
-                                plt.plot(binned_mzml_spectrum, linewidth=0.2)    
-                                plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.2)                          
-                                #plt.show()
-                                plt.savefig("scan_118844.png")
+                            #if scan in [118844, 129403]:
+                            plt.figure(dpi=1200)
+                            plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
+                            plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')                          
+                            #plt.show()
+                            plt.savefig(f'plots/scan_{scan}.png')
 
                     return xcorr_scores
                         

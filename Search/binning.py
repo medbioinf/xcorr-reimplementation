@@ -13,11 +13,10 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
             index = int(mass // bin_width)
             bins_filled[index] = 1
 
-            if bins_filled[index - 1] == 0 and index - 1 != -1:
-                bins_filled[index - 1] = 0.5
+            if index - 1 != -1:
+                bins_filled[index - 1] = max (bins_filled[index - 1], 0.5)
 
-            if bins_filled[index + 1] == 0:
-                bins_filled[index + 1] = 0.5
+            bins_filled[index + 1] = max(bins_filled[index + 1], 0.5)
 
     else:
         #Normalised intensity array 0-1
@@ -27,8 +26,7 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
         for mass, intensity in zip(mz_array, intensity_array):
 
             index = int(mass // bin_width)
-            if bins_filled[index] < intensity:
-                bins_filled[index] = intensity
+            bins_filled[index] = max(bins_filled[index], intensity)
 
     return bins_filled
 
