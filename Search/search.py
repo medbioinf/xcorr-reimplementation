@@ -91,8 +91,6 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                     if upper_index == -1:
                         upper_index = list_length - 1
-                    else:
-                        upper_index = upper_index - 1
 
                     pep_index_slice = pep_index[lower_index:upper_index]
 
@@ -100,6 +98,10 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                     mzml_intensity_array = mzml_entry["intensity array"]
 
                     binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
+
+                    #Get mzml spect before appending shiftsize for correct plotting
+                    binned_mzml_spectrum_before_shift = binned_mzml_spectrum 
+
                     mzml_bins_size = binned_mzml_spectrum.size
                     
                     #Append shift size on one of the arrays for shift
@@ -136,17 +138,27 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             mean_corr = np.mean(corr)
                             zeroshift_corr = corr[(corr.size // 2)]
+                            xcorr_score = zeroshift_corr - mean_corr
 
-                            print(scan, zeroshift_corr - mean_corr, pep)
+                            result = [scan, xcorr_score, pep] # Xcorr score
+                            print(result)
+                            xcorr_scores.append(result)  
 
-                            xcorr_scores.append([scan, zeroshift_corr - mean_corr, pep, binned_mzml_spectrum, binned_fasta_spectrum])  # Xcorr score
+                            if scan in [138755, 132489, 131926, 131364, 100440]:
 
-                            #if scan in [118844, 129403]:
-                            plt.figure(dpi=1200)
-                            plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
-                            plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')                          
-                            #plt.show()
-                            plt.savefig(f'plots/scan_{scan}.png')
+
+                                plt.figure(dpi=1200)
+                                plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
+                                plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
+                                plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
+
+                                if predict_spect:
+
+                                    plt.savefig(f'Plots/scan_{scan}_ps.png')
+
+                                else:
+                                    
+                                    plt.savefig(f'Plots/scan_{scan}.png')
 
                     return xcorr_scores
                         

@@ -1,8 +1,14 @@
 # Xcorr-reimplementation
 
-Peptide identification tool
+## Peptide identification tool
 
-Usage: cli.py [OPTIONS] SAMPLE_FILENAME PROTEIN_DATABASE
+### Installation
+
+conda env create -f environment.yml
+
+### Usage 
+
+cli.py [OPTIONS] SAMPLE_FILENAME PROTEIN_DATABASE
 
 ### Arguments
 
