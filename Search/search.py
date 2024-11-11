@@ -18,6 +18,8 @@ from Search.utils import fragments, masstocharge_to_dalton, tolerance_bounds, bi
 from Search.binning import binning
 from Search.predicted_spect import predict_spectrum
 
+import pickle
+
 PEPTIDE_MIN_LENGTH = 6
 PEPTIDE_MAX_LENGTH = 50
 MAX_MISSED_CLEAVAGES = 2
@@ -69,7 +71,8 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         spect_id = mzml_entry["id"]
         scan = int(spect_id.split("scan=")[1])
         #scan = int(re.search("scan=\d+", spect_id).group(0)[5:])
-        
+
+        #if scan == 71120:
         if scan in scanlist:
 
             for precursor in mzml_entry["precursorList"]["precursor"]:
@@ -100,9 +103,9 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                     binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
 
                     #Get mzml spect before appending shiftsize for correct plotting
-                    binned_mzml_spectrum_before_shift = binned_mzml_spectrum 
+                    binned_mzml_spectrum_before_shift = binned_mzml_spectrum #numpy.copy()?
 
-                    mzml_bins_size = binned_mzml_spectrum.size
+                    mzml_bins_size = binned_mzml_spectrum.size 
                     
                     #Append shift size on one of the arrays for shift
                     binned_mzml_spectrum = np.insert(binned_mzml_spectrum, 0, np.zeros(int(SHIFT / 0.02)))
@@ -142,23 +145,29 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             result = [scan, xcorr_score, pep] # Xcorr score
                             print(result)
-                            xcorr_scores.append(result)  
+                            xcorr_scores.append(result)
 
-                            if scan in [138755, 132489, 131926, 131364, 100440]:
+                            # with open("binned_mzml_spectrum.pkl", "bw") as f:
+                            #     pickle.dump(binned_mzml_spectrum_before_shift, f)
+                            
+                            # with open("binned_fasta_spectrum.pkl", "bw") as f:
+                            #     pickle.dump(binned_fasta_spectrum, f)
+
+                            # if scan in [138755, 132489, 131926, 131364, 100440]:
 
 
-                                plt.figure(dpi=1200)
-                                plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
-                                plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
-                                plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
+                            #     plt.figure(dpi=1200)
+                            #     plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
+                            #     plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
+                            #     plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
 
-                                if predict_spect:
+                            #     if predict_spect:
 
-                                    plt.savefig(f'Plots/scan_{scan}_ps.png')
+                            #         plt.savefig(f'Plots/scan_{scan}_ps.png')
 
-                                else:
+                            #     else:
                                     
-                                    plt.savefig(f'Plots/scan_{scan}.png')
+                            #         plt.savefig(f'Plots/scan_{scan}.png')
 
                     return xcorr_scores
                         
