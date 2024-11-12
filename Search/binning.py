@@ -4,7 +4,7 @@ import math
 
 def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
 
-    bins_filled = np.zeros(math.ceil(mz_array[len(mz_array) - 1] / bin_width) + 1)
+    bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1)
 
     if theo_spect:
 
@@ -21,11 +21,15 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
         #Normalised intensity array 0-1
         #intensity_array = (intensity_array - np.min(intensity_array)) / (np.max(intensity_array)-np.min(intensity_array)) 
         intensity_array = intensity_array  / np.max(intensity_array)
-        
-        for mass, intensity in zip(mz_array, intensity_array):
 
-            index = int(mass // bin_width)
-            bins_filled[index] = max(bins_filled[index], intensity)
+        top_hundred_intensities = -np.sort(-intensity_array)[:min(100, intensity_array.size)] #Get top 100 intensities
+
+        for mass, intensity in zip(mz_array, intensity_array):
+            
+            if 200 <= mass <= 2000 and intensity in top_hundred_intensities:
+
+                index = int(mass // bin_width)
+                bins_filled[index] = max(bins_filled[index], intensity)
 
     return bins_filled
 

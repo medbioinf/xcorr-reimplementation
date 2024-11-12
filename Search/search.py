@@ -139,8 +139,10 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, "valid")
 
-                            mean_corr = np.mean(corr)
-                            zeroshift_corr = corr[(corr.size // 2)]
+                            zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
+                            corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
+                            mean_corr = np.mean(corr) #Background similarity
+                            
                             xcorr_score = zeroshift_corr - mean_corr
 
                             result = [scan, xcorr_score, pep] # Xcorr score
@@ -153,21 +155,19 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             # with open("binned_fasta_spectrum.pkl", "bw") as f:
                             #     pickle.dump(binned_fasta_spectrum, f)
 
-                            # if scan in [138755, 132489, 131926, 131364, 100440]:
 
+                            # plt.figure(dpi=1200)
+                            # plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
+                            # plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
+                            # plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
 
-                            #     plt.figure(dpi=1200)
-                            #     plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
-                            #     plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
-                            #     plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
+                            # if predict_spect:
 
-                            #     if predict_spect:
+                            #     plt.savefig(f'Plots/scan_{scan}_ps.png')
 
-                            #         plt.savefig(f'Plots/scan_{scan}_ps.png')
-
-                            #     else:
-                                    
-                            #         plt.savefig(f'Plots/scan_{scan}.png')
+                            # else:
+                                
+                            #     plt.savefig(f'Plots/scan_{scan}.png')
 
                     return xcorr_scores
                         
