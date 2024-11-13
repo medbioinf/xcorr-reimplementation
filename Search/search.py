@@ -73,7 +73,8 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         #scan = int(re.search("scan=\d+", spect_id).group(0)[5:])
 
         #if scan == 71120:
-        if scan in scanlist:
+        if scan in [42578, 54996]:
+        #if scan in scanlist:
 
             for precursor in mzml_entry["precursorList"]["precursor"]:
 
@@ -151,7 +152,8 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             # with open("binned_mzml_spectrum.pkl", "bw") as f:
                             #     pickle.dump(binned_mzml_spectrum_before_shift, f)
-                            
+                            with open(f'testdata/scan_{scan}_spectrum.pkl', "bw") as f:
+                                pickle.dump((scan, mzml_mz_array, mzml_intensity_array), f)
                             # with open("binned_fasta_spectrum.pkl", "bw") as f:
                             #     pickle.dump(binned_fasta_spectrum, f)
 
