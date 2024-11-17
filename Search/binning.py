@@ -19,13 +19,14 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
 
     else:
         #Normalised intensity array 0-1
-        #intensity_array = (intensity_array - np.min(intensity_array)) / (np.max(intensity_array)-np.min(intensity_array)) 
         intensity_array = intensity_array  / np.max(intensity_array)
 
-        top_hundred_intensities = -np.sort(-intensity_array)[:min(100, intensity_array.size)] #Get top 100 intensities
+        #Get top 100 intensities
+        top_hundred_intensities = -np.sort(-intensity_array)[:min(100, intensity_array.size)]
 
         for mass, intensity in zip(mz_array, intensity_array):
             
+            #Check if mass between 200 and 2000 and belongs to the top 100 intensities
             if 200 <= mass <= 2000 and intensity in top_hundred_intensities:
 
                 index = int(mass // bin_width)

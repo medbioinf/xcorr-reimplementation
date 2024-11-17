@@ -144,9 +144,9 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
                             mean_corr = np.mean(corr) #Background similarity
                             
-                            xcorr_score = zeroshift_corr - mean_corr
+                            xcorr_score = zeroshift_corr - mean_corr #Xcorr score
 
-                            result = [scan, xcorr_score, pep] # Xcorr score
+                            result = [scan, xcorr_score, pep] 
                             print(result)
                             xcorr_scores.append(result)
 
@@ -195,7 +195,10 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     smallindex = pd.read_table("smallindex.txt", sep=' ')
     scanlist = [scan for scan in smallindex['scan']]
 
-    with multiprocessing.Pool(processes) as pool, open("output.txt", "w") as outfile:
+    with multiprocessing.Pool(processes) as pool, open(f'{sample_filename.split('.')[0]}_result.txt', "w") as outfile:
+
+        print("Run against: ", protein_database, file=outfile)
+        
         mzml_reader = mzml.read(sample_filename)
 
         all_specs_read = False
@@ -216,9 +219,11 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
 
             for result in results:
                 res = result.get()
-                if res is not None:
 
-                    print(res, file=outfile)
+                if res is not None:
+                    
+                    for r in res:
+                        print(r, file=outfile)
 
     end = time.time()
     print("Execution Time: ", end - start)
