@@ -1,20 +1,20 @@
 from  ms2pip.single_prediction import SinglePrediction
 
 def predict_spectrum(peptide : str, charge : int):
+    """
+    Predicts the spectrum of the peptide string
+    """
 
     modstring = ""
-    index = 1
 
-    for aa in peptide:
+    for idx, aa in enumerate(peptide):
 
         match aa:
             case('C'):
-                modstring += f'{index}|Carbamidomethyl|'
+                modstring += f'{idx + 1}|Carbamidomethyl|'
 
             case('M'):
-                modstring += f'{index}|Oxidation|'
-
-        index += 1
+                modstring += f'{idx + 1}|Oxidation|'
 
     if modstring == "":
         modstring = "-"

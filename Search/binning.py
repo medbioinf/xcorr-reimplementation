@@ -3,6 +3,9 @@ import math
 
 
 def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
+    """
+    Bins spectra
+    """
 
     bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1)
 

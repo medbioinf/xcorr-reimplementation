@@ -26,6 +26,9 @@ MAX_MISSED_CLEAVAGES = 2
 SHIFT = 75
 
 def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
+    """ 
+    Creates the sorted peptide index List, contains the mass and peptides
+    """
 
     print("Creating Peptide Index...")
     
@@ -65,6 +68,9 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     
 
 def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
+    """ 
+    Returns the identified result as [scan, xcorrscore, peptide]
+    """
 
     if mzml_entry["ms level"] == 2:
         #auxiliary.print_tree(mzml_entry)
@@ -73,8 +79,8 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         #scan = int(re.search("scan=\d+", spect_id).group(0)[5:])
 
         #if scan == 71120:
-        if scan in [42578, 54996]:
-        #if scan in scanlist:
+        #if scan in [42578, 54996]:
+        if scan in scanlist:
 
             for precursor in mzml_entry["precursorList"]["precursor"]:
 
@@ -152,8 +158,8 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             # with open("binned_mzml_spectrum.pkl", "bw") as f:
                             #     pickle.dump(binned_mzml_spectrum_before_shift, f)
-                            with open(f'testdata/scan_{scan}_spectrum.pkl', "bw") as f:
-                                pickle.dump((scan, mzml_mz_array, mzml_intensity_array), f)
+                            # with open(f'testdata/scan_{scan}_spectrum.pkl', "bw") as f:
+                            #     pickle.dump((scan, mzml_mz_array, mzml_intensity_array), f)
                             # with open("binned_fasta_spectrum.pkl", "bw") as f:
                             #     pickle.dump(binned_fasta_spectrum, f)
 
@@ -195,7 +201,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     smallindex = pd.read_table("smallindex.txt", sep=' ')
     scanlist = [scan for scan in smallindex['scan']]
 
-    with multiprocessing.Pool(processes) as pool, open(f'{sample_filename.split('.')[0]}_result.txt', "w") as outfile:
+    with multiprocessing.Pool(processes) as pool, open(f'{sample_filename.split('.')[0]}_ps={predict_spect}_result.txt', "w") as outfile:
 
         print("Run against: ", protein_database, file=outfile)
         
