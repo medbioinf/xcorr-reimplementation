@@ -79,8 +79,10 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         #scan = int(re.search("scan=\d+", spect_id).group(0)[5:])
 
         #if scan == 71120:
-        #if scan in [42578, 54996]:
-        if scan in scanlist:
+        if scan in [71120, 131926]:
+        #if scan in scanlist:
+        #if scan == 131926:
+        #if scan in [71120, 102968, 113974, 102326, 70466, 107413, 121180, 103621, 124639, 131926, 114319, 131364, 87329, 107790]:
 
             for precursor in mzml_entry["precursorList"]["precursor"]:
 
@@ -126,13 +128,13 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             if predict_spect:
 
-                                fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge)
+                                fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge-1)
                                 binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
 
                             else:
-                                fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=charge)), key = float))
+                                fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=charge-1)), key = float))
                                 binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
-
+    
                             fasta_bins_size = binned_fasta_spectrum.size
 
                             if mzml_bins_size < fasta_bins_size:
@@ -156,26 +158,23 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             print(result)
                             xcorr_scores.append(result)
 
-                            # with open("binned_mzml_spectrum.pkl", "bw") as f:
+                            # with open(f"testdata/binned_mzml_spectrum_{scan}.pkl", "bw") as f:
                             #     pickle.dump(binned_mzml_spectrum_before_shift, f)
-                            # with open(f'testdata/scan_{scan}_spectrum.pkl', "bw") as f:
-                            #     pickle.dump((scan, mzml_mz_array, mzml_intensity_array), f)
-                            # with open("binned_fasta_spectrum.pkl", "bw") as f:
-                            #     pickle.dump(binned_fasta_spectrum, f)
 
+                            #if scan in [100440, 131364, 131926, 132489, 138755]:
 
-                            # plt.figure(dpi=1200)
-                            # plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
-                            # plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
-                            # plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
+                            plt.figure(dpi=1200)
+                            plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
+                            plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
+                            plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
 
-                            # if predict_spect:
+                            if predict_spect:
 
-                            #     plt.savefig(f'Plots/scan_{scan}_ps.png')
+                                plt.savefig(f'Plots/scan_{scan}_ps.png')
 
-                            # else:
+                            else:
                                 
-                            #     plt.savefig(f'Plots/scan_{scan}.png')
+                                plt.savefig(f'Plots/scan_{scan}_comet_top.png')
 
                     return xcorr_scores
                         
@@ -204,6 +203,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     with multiprocessing.Pool(processes) as pool, open(f'{sample_filename.split('.')[0]}_ps={predict_spect}_result.txt', "w") as outfile:
 
         print("Run against: ", protein_database, file=outfile)
+        print("Scan XcorrScore Peptide", file=outfile)
         
         mzml_reader = mzml.read(sample_filename)
 
@@ -229,7 +229,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
                 if res is not None:
                     
                     for r in res:
-                        print(r, file=outfile)
+                        print(*r, file=outfile)
 
     end = time.time()
     print("Execution Time: ", end - start)

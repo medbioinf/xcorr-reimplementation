@@ -5,15 +5,17 @@
 ### Installation
 
 ```
+#With conda
 conda env create -f environment.yml
 ```
 
 ### Usage 
 
 ```
+#Activate Environment
 conda activate xcorr-reimplementation
-```
-```
+
+#Run
 python cli.py [OPTIONS] SAMPLE_FILENAME PROTEIN_DATABASE
 ```
 
