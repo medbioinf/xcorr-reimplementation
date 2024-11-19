@@ -79,10 +79,10 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         #scan = int(re.search("scan=\d+", spect_id).group(0)[5:])
 
         #if scan == 71120:
-        if scan in [71120, 131926]:
+        #if scan in [71120, 131926]:
         #if scan in scanlist:
         #if scan == 131926:
-        #if scan in [71120, 102968, 113974, 102326, 70466, 107413, 121180, 103621, 124639, 131926, 114319, 131364, 87329, 107790]:
+        if scan in [71120, 102968, 113974, 102326, 70466, 107413, 121180, 103621, 124639, 131926, 114319, 131364, 87329, 107790]:
 
             for precursor in mzml_entry["precursorList"]["precursor"]:
 
@@ -154,7 +154,14 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             
                             xcorr_score = zeroshift_corr - mean_corr #Xcorr score
 
-                            result = [scan, xcorr_score, pep] 
+                            matches = 0
+
+                            for mzmlbin, fastabin in zip(binned_mzml_spectrum_before_shift, binned_fasta_spectrum): #Count matches
+
+                                if mzmlbin > 0 and fastabin > 0:
+                                    matches += 1
+
+                            result = [scan, xcorr_score, matches, pep] 
                             print(result)
                             xcorr_scores.append(result)
 
@@ -163,18 +170,18 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             #if scan in [100440, 131364, 131926, 132489, 138755]:
 
-                            plt.figure(dpi=1200)
-                            plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
-                            plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
-                            plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
+                            # plt.figure(dpi=1200)
+                            # plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
+                            # plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
+                            # plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
 
-                            if predict_spect:
+                            # if predict_spect:
 
-                                plt.savefig(f'Plots/scan_{scan}_ps.png')
+                            #     plt.savefig(f'Plots/scan_{scan}_ps.png')
 
-                            else:
+                            # else:
                                 
-                                plt.savefig(f'Plots/scan_{scan}_comet_top.png')
+                            #     plt.savefig(f'Plots/scan_{scan}_comet_top.png')
 
                     return xcorr_scores
                         
@@ -203,7 +210,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     with multiprocessing.Pool(processes) as pool, open(f'{sample_filename.split('.')[0]}_ps={predict_spect}_result.txt', "w") as outfile:
 
         print("Run against: ", protein_database, file=outfile)
-        print("Scan XcorrScore Peptide", file=outfile)
+        print("Scan XcorrScore Matches Peptide", file=outfile)
         
         mzml_reader = mzml.read(sample_filename)
 

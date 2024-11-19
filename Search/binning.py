@@ -6,8 +6,7 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
     """
     Bins spectra
     """
-
-    #bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1)
+    
     bins_filled = np.zeros(int(2000/bin_width) + 1)
 
     if theo_spect:
@@ -39,16 +38,11 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
         for mass, intensity in zip(mz_array, intensity_array):
             
             #Check if mass between 200 and 2000 and belongs to the top 100 intensities
-            if intensity in top_hundred_intensities:
+            if intensity in top_hundred_intensities and 200 <= mass <= 2000:
 
                 index = int(mass // bin_width)
                 bins_filled[index] = max(bins_filled[index], intensity)
         
     
     return bins_filled
-
-#mz_array = np.array([56, 199, 200.01, 250, 300, 400, 700, 2000])
-# int_array = np.array([2, 3, 6, 8, 9, 2, 90, 4, 56, 35])
-
-#print(binning(mz_array, theo_spect=True)[10000])
 
