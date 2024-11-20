@@ -210,10 +210,10 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     smallindex = pd.read_table("smallindex.txt", sep=' ')
     scanlist = [scan for scan in smallindex['scan']]
 
-    with multiprocessing.Pool(processes) as pool, open(f'{sample_filename.split('.')[0]}_ps={predict_spect}_result.txt', "w") as outfile:
+    with multiprocessing.Pool(processes) as pool, open(f'Results/{sample_filename.split('.')[0]}_ps={predict_spect}_result.tsv', "w") as outfile:
 
-        print("Run against: ", protein_database, file=outfile)
-        print("Scan Charge XcorrScore ions_matched ions_total Peptide", file=outfile)
+        #print("Run against: ", protein_database, file=outfile)
+        print("Scan\tCharge\tXcorrScore\tions_matched\tions_total\tPeptide", file=outfile)
         
         mzml_reader = mzml.read(sample_filename)
 
@@ -239,7 +239,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
                 if res is not None:
                     
                     for r in res:
-                        print(*r, file=outfile)
+                        print(*r, file=outfile, sep='\t')
 
     end = time.time()
     print("Execution Time: ", end - start)
