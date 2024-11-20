@@ -121,18 +121,22 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                     binned_mzml_spectrum = np.append(binned_mzml_spectrum, np.zeros(int(SHIFT / 0.02)))
 
                     xcorr_scores = []
-
+                    
                     for pepts in pep_index_slice:
 
                         for pep in pepts[1]:
 
+                            total_ions = 0
+
                             if predict_spect:
 
-                                fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge-1)
+                                fasta_mz_array, fasta_int_array = predict_spectrum(pep, min(charge-1, 3))
+                                total_ions = fasta_mz_array.size
                                 binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
-
+                                
                             else:
-                                fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=charge-1)), key = float))
+                                fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=min(charge-1, 3))), key = float))
+                                total_ions = fasta_mz_array.size
                                 binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
     
                             fasta_bins_size = binned_fasta_spectrum.size
@@ -145,14 +149,13 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                                 binned_fasta_spectrum = np.append(binned_fasta_spectrum, np.zeros(mzml_bins_size-fasta_bins_size))
             
-
                             corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, "valid")
 
                             zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
                             corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
                             mean_corr = np.mean(corr) #Background similarity
                             
-                            xcorr_score = zeroshift_corr - mean_corr #Xcorr score
+                            xcorr_score = np.round(zeroshift_corr - mean_corr, 4) #Xcorr score
 
                             matches = 0
 
@@ -161,12 +164,12 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                                 if mzmlbin > 0 and fastabin > 0:
                                     matches += 1
 
-                            result = [scan, xcorr_score, matches, pep] 
+                            result = [scan, charge, xcorr_score, matches, total_ions,  pep] 
                             print(result)
                             xcorr_scores.append(result)
 
-                            # with open(f"testdata/binned_mzml_spectrum_{scan}.pkl", "bw") as f:
-                            #     pickle.dump(binned_mzml_spectrum_before_shift, f)
+                            # with open(f"testdata/binned_fasta_spectrum_{scan}.pkl", "bw") as f:
+                            #     pickle.dump(binned_fasta_spectrum, f)
 
                             #if scan in [100440, 131364, 131926, 132489, 138755]:
 
@@ -210,7 +213,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     with multiprocessing.Pool(processes) as pool, open(f'{sample_filename.split('.')[0]}_ps={predict_spect}_result.txt', "w") as outfile:
 
         print("Run against: ", protein_database, file=outfile)
-        print("Scan XcorrScore Matches Peptide", file=outfile)
+        print("Scan Charge XcorrScore ions_matched ions_total Peptide", file=outfile)
         
         mzml_reader = mzml.read(sample_filename)
 
