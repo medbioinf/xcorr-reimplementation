@@ -13,9 +13,9 @@ def tolerance_bounds(ref_mass : float):
     Returns the lower and upper tolerance bounds of the reference mass,
     as a tuple
     """
-
-    lower_bound = ref_mass - ref_mass * 0.00001
-    upper_bound = ref_mass + ref_mass * 0.00001
+    #20 ppm
+    lower_bound = ref_mass - ref_mass * 0.00002
+    upper_bound = ref_mass + ref_mass * 0.00002
     return (lower_bound, upper_bound)
 
 

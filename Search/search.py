@@ -111,18 +111,17 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                     binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
 
-                    #Get mzml spect before appending shiftsize for correct plotting
-                    binned_mzml_spectrum_before_shift = binned_mzml_spectrum #numpy.copy()?
-
                     mzml_bins_size = binned_mzml_spectrum.size 
                     
-                    #Append shift size on one of the arrays for shift
-                    binned_mzml_spectrum = np.insert(binned_mzml_spectrum, 0, np.zeros(int(SHIFT / 0.02)))
-                    binned_mzml_spectrum = np.append(binned_mzml_spectrum, np.zeros(int(SHIFT / 0.02)))
+                    #Append shift size on one of the arrays for shifted correlation
+                    shifted_binned_mzml_spectrum = np.insert(binned_mzml_spectrum, 0, np.zeros(int(SHIFT / 0.02)))
+                    shifted_binned_mzml_spectrum = np.append(shifted_binned_mzml_spectrum, np.zeros(int(SHIFT / 0.02)))
 
                     xcorr_scores = []
                     
                     for pepts in pep_index_slice:
+
+                        calc_neutral_mass = np.round(pepts[0], 6)
 
                         for pep in pepts[1]:
 
@@ -149,7 +148,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                                 binned_fasta_spectrum = np.append(binned_fasta_spectrum, np.zeros(mzml_bins_size-fasta_bins_size))
             
-                            corr = np.correlate(binned_mzml_spectrum, binned_fasta_spectrum, "valid")
+                            corr = np.correlate(shifted_binned_mzml_spectrum, binned_fasta_spectrum, "valid")
 
                             zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
                             corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
@@ -159,37 +158,29 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             matches = 0
 
-                            for mzmlbin, fastabin in zip(binned_mzml_spectrum_before_shift, binned_fasta_spectrum): #Count matches
+                            for mzmlbin, fastabin in zip(binned_mzml_spectrum, binned_fasta_spectrum): #Count matches
 
                                 if mzmlbin > 0 and fastabin > 0:
                                     matches += 1
 
-                            result = [scan, charge, xcorr_score, matches, total_ions,  pep] 
+                            result = [scan, charge, np.round(mass_mzml, 6), calc_neutral_mass, xcorr_score, matches, total_ions,  pep] 
                             print(result)
                             xcorr_scores.append(result)
 
                             # with open(f"testdata/binned_fasta_spectrum_{scan}.pkl", "bw") as f:
                             #     pickle.dump(binned_fasta_spectrum, f)
 
-                            #if scan in [100440, 131364, 131926, 132489, 138755]:
+                            # if scan in [71120, 131926]:
 
-                            # plt.figure(dpi=1200)
-                            # plt.plot(binned_mzml_spectrum_before_shift, linewidth=0.03, color='b')    
-                            # plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
-                            # plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
-
-                            # if predict_spect:
-
-                            #     plt.savefig(f'Plots/scan_{scan}_ps.png')
-
-                            # else:
-                                
-                            #     plt.savefig(f'Plots/scan_{scan}_comet_top.png')
+                            #     plt.figure(dpi=1200)
+                            #     plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
+                            #     plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
+                            #     plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
+                            #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}.png')
 
                     return xcorr_scores
                         
     return None
-
 
 
 def main(sample_filename : str, protein_database : str, processes : int, spectra_amount : int, predict_spect : bool):
@@ -213,7 +204,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     with multiprocessing.Pool(processes) as pool, open(f'Results/{sample_filename.split('.')[0]}_ps={predict_spect}_result.tsv', "w") as outfile:
 
         #print("Run against: ", protein_database, file=outfile)
-        print("Scan\tCharge\tXcorrScore\tions_matched\tions_total\tPeptide", file=outfile)
+        print("scan\tcharge\texp_neutral_mass\tcalc_neutral_mass\txcorr\tions_matched\tions_total\tplain_peptide", file=outfile)
         
         mzml_reader = mzml.read(sample_filename)
 
