@@ -49,7 +49,7 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
                     m_count = peptide.count("M")
                     
                     if m_count != 0:
-                        for cnt in range(min(m_count, 3)):
+                        for cnt in range(1, min(m_count, 3) + 1):
                             pept_index[static_modified_pep_mass + (cnt * 15.994915)].add(peptide) # add modified M
 
     print("Read done!")
@@ -82,7 +82,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         #if scan in [71120, 131926]:
         #if scan in scanlist:
         #if scan == 131926:
-        if scan in [71120, 102968, 113974, 102326, 70466, 107413, 121180, 103621, 124639, 131926, 114319, 131364, 87329, 107790]:
+        if scan in [71120, 102968, 113974, 102326, 70466, 107413, 121180, 103621, 124639, 131926, 114319, 131364, 87329, 107790, 109915]:
 
             for precursor in mzml_entry["precursorList"]["precursor"]:
 
@@ -150,6 +150,12 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
             
                             corr = np.correlate(shifted_binned_mzml_spectrum, binned_fasta_spectrum, "valid")
 
+                            # if scan in [109915, 71120, 107790, 114319]:
+                            #     plt.figure(dpi=1000)
+                            #     plt.plot(corr, linewidth=0.03, color="r")
+                            #     plt.title(f'Scan: {scan} Corr') 
+                            #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}_corr.png')
+
                             zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
                             corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
                             mean_corr = np.mean(corr) #Background similarity
@@ -170,14 +176,16 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             # with open(f"testdata/binned_fasta_spectrum_{scan}.pkl", "bw") as f:
                             #     pickle.dump(binned_fasta_spectrum, f)
 
-                            # if scan in [71120, 131926]:
+
+                            # if scan in [109915, 71120, 107790, 114319]:
 
                             #     plt.figure(dpi=1200)
                             #     plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
                             #     plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
                             #     plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
                             #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}.png')
-
+                            #     plt.plot()
+                            
                     return xcorr_scores
                         
     return None
@@ -195,8 +203,6 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
 
     manager = multiprocessing.Manager()
     pep_index = manager.list(pept_list) # <- peptide index
-
-    total_results = []
 
     smallindex = pd.read_table("smallindex.txt", sep=' ')
     scanlist = [scan for scan in smallindex['scan']]

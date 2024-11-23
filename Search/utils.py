@@ -5,7 +5,7 @@ def masstocharge_to_dalton(mz : float, charge : int ):
     """ 
     Converts mass to charge to dalton
     """
-    return mz * charge - 1.00794 * charge
+    return (mz * charge) - (1.00794 * charge)
 
 
 def tolerance_bounds(ref_mass : float):
