@@ -6,6 +6,7 @@ import time
 from typing import DefaultDict, Set, List, TextIO, Tuple
 import re
 import matplotlib.pyplot as plt
+import datetime
 
 # 3rd party import
 from pyteomics import mzml, parser, auxiliary, mass
@@ -69,7 +70,7 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
 
 def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
     """ 
-    Returns the identified result as [scan, xcorrscore, peptide]
+    Returns the identified result
     """
 
     if mzml_entry["ms level"] == 2:
@@ -134,6 +135,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                                 binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
                                 
                             else:
+
                                 fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=min(charge-1, 3))), key = float))
                                 total_ions = fasta_mz_array.size
                                 binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
@@ -170,12 +172,14 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                                     matches += 1
 
                             result = [scan, charge, np.round(mass_mzml, 6), calc_neutral_mass, xcorr_score, matches, total_ions,  pep] 
-                            print(result)
+                            #print(result)
+
                             xcorr_scores.append(result)
 
-                            # with open(f"testdata/binned_fasta_spectrum_{scan}.pkl", "bw") as f:
-                            #     pickle.dump(binned_fasta_spectrum, f)
-
+                            # if scan == 71120:
+                            #     t = (mzml_mz_array, mzml_intensity_array, pep, scan)
+                            #     with open(f"testdata/scan_{scan}.pkl", "bw") as f:
+                            #         pickle.dump(t, f)
 
                             # if scan in [109915, 71120, 107790, 114319]:
 
@@ -187,7 +191,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             #     plt.plot()
                             
                     return xcorr_scores
-                        
+               
     return None
 
 
@@ -239,7 +243,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
                         print(*r, file=outfile, sep='\t')
 
     end = time.time()
-    print("Execution Time: ", end - start)
+    print("Execution Time: ", str(datetime.timedelta(seconds= round(end - start))))
 
 
 

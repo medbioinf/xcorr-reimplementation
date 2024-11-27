@@ -62,6 +62,3 @@ def binary_search(pep_index: list[tuple[float, tuple[str]]], searched_mass, list
             end = mid - 1
         
     return mid 
-
-
-
