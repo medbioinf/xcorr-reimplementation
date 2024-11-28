@@ -35,23 +35,21 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     
     pept_index: DefaultDict[float, Set[str]] = defaultdict(set)
 
+    variable_mods = {"m" : ["M"]}
+    fixed_mods = {"c" : ["C"]}
+
+    mass.std_aa_comp['m'] = mass.Composition({'O': 1})
+    mass.std_aa_comp['c'] = mass.Composition({'H': 3, 'C' : 2, 'N' : 1, 'O' : 1})
+
     with read_fasta(fasta_content) as fasta:
         for (_, sequence) in fasta:
             peptides = parser.cleave(sequence, "trypsin", missed_cleavages=MAX_MISSED_CLEAVAGES, min_length=PEPTIDE_MIN_LENGTH, max_length=PEPTIDE_MAX_LENGTH)
             for peptide in peptides:
                 if "X" not in peptide:
-                    pep_mass = mass.fast_mass(peptide)
 
-                    c_count = peptide.count("C")
-                    static_modified_pep_mass = pep_mass + (c_count * 57.021464)
+                    for modpept in parser.isoforms(peptide, variable_mods=variable_mods, fixed_mods=fixed_mods, max_mods=3):
+                        pept_index[mass.calculate_mass(modpept)].add(modpept)
 
-                    pept_index[static_modified_pep_mass].add(peptide) # add static modified sequence
-                    
-                    m_count = peptide.count("M")
-                    
-                    if m_count != 0:
-                        for cnt in range(1, min(m_count, 3) + 1):
-                            pept_index[static_modified_pep_mass + (cnt * 15.994915)].add(peptide) # add modified M
 
     print("Read done!")
     pept_index: List[Tuple[float, Tuple[str]]] = [
@@ -74,15 +72,10 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
     """
 
     if mzml_entry["ms level"] == 2:
-        #auxiliary.print_tree(mzml_entry)
+
         spect_id = mzml_entry["id"]
         scan = int(spect_id.split("scan=")[1])
-        #scan = int(re.search("scan=\d+", spect_id).group(0)[5:])
 
-        #if scan == 71120:
-        #if scan in [71120, 131926]:
-        #if scan in scanlist:
-        #if scan == 131926:
         if scan in [71120, 102968, 113974, 102326, 70466, 107413, 121180, 103621, 124639, 131926, 114319, 131364, 87329, 107790, 109915]:
 
             for precursor in mzml_entry["precursorList"]["precursor"]:
@@ -135,7 +128,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                                 binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
                                 
                             else:
-
+                                
                                 fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=min(charge-1, 3))), key = float))
                                 total_ions = fasta_mz_array.size
                                 binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
@@ -157,7 +150,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             #     plt.plot(corr, linewidth=0.03, color="r")
                             #     plt.title(f'Scan: {scan} Corr') 
                             #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}_corr.png')
-
+                            
                             zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
                             corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
                             mean_corr = np.mean(corr) #Background similarity
@@ -175,11 +168,6 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             #print(result)
 
                             xcorr_scores.append(result)
-
-                            # if scan == 71120:
-                            #     t = (mzml_mz_array, mzml_intensity_array, pep, scan)
-                            #     with open(f"testdata/scan_{scan}.pkl", "bw") as f:
-                            #         pickle.dump(t, f)
 
                             # if scan in [109915, 71120, 107790, 114319]:
 

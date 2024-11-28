@@ -1,5 +1,4 @@
-from pyteomics import mass
-
+from pyteomics import mass, parser
 
 def masstocharge_to_dalton(mz : float, charge : int ):
     """ 
@@ -22,18 +21,19 @@ def tolerance_bounds(ref_mass : float):
 def fragments(peptide, types=('b', 'y'), maxcharge=1):
     """
     The function generates all possible m/z for fragments of types
-    `types` and of charges from 1 to `maxharge`.
+    `types` and of charges from 1 to `maxcharge`.
     """
+    peptide = parser.parse(peptide)
+
     for i in range(1, len(peptide)):
         for ion_type in types:
             for charge in range(1, maxcharge+1):
                 if ion_type[0] in 'abc':
-                    yield mass.fast_mass(
-                            peptide[:i], ion_type=ion_type, charge=charge)
+                    yield mass.calculate_mass(peptide[:i], ion_type=ion_type, charge=charge)
+
                 else:
-                    yield mass.fast_mass(
-                            peptide[i:], ion_type=ion_type, charge=charge)
-                    
+                    yield mass.calculate_mass(peptide[i:], ion_type=ion_type, charge=charge)
+                        
 
 def binary_search(pep_index: list[tuple[float, tuple[str]]], searched_mass, list_length):
     """ 
