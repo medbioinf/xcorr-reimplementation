@@ -11,11 +11,11 @@ def predict_spectrum(peptide : str, charge : int):
     for idx, aa in enumerate(peptide):
 
         match aa:
-            case('cC'):
+            case('[carb]C'):
                 peptide[idx] = 'C'
                 modstring += f'{idx + 1}|Carbamidomethyl|'
 
-            case('mM'):
+            case('[oxid]M'):
                 peptide[idx] = 'M'
                 modstring += f'{idx + 1}|Oxidation|'
 

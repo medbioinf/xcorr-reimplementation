@@ -35,11 +35,11 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     
     pept_index: DefaultDict[float, Set[str]] = defaultdict(set)
 
-    variable_mods = {"m" : ["M"]}
-    fixed_mods = {"c" : ["C"]}
+    variable_mods = {"[oxid]" : ["M"]}
+    fixed_mods = {"[carb]" : ["C"]}
 
-    mass.std_aa_comp['m'] = mass.Composition({'O': 1})
-    mass.std_aa_comp['c'] = mass.Composition({'H': 3, 'C' : 2, 'N' : 1, 'O' : 1})
+    mass.std_aa_comp['[oxid]'] = mass.Composition({'O': 1})
+    mass.std_aa_comp['[carb]'] = mass.Composition({'H': 3, 'C' : 2, 'N' : 1, 'O' : 1})
 
     with read_fasta(fasta_content) as fasta:
         for (_, sequence) in fasta:
@@ -76,7 +76,8 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         spect_id = mzml_entry["id"]
         scan = int(spect_id.split("scan=")[1])
 
-        if scan in [71120, 102968, 113974, 102326, 70466, 107413, 121180, 103621, 124639, 131926, 114319, 131364, 87329, 107790, 109915]:
+
+        if scan in scanlist:
 
             for precursor in mzml_entry["precursorList"]["precursor"]:
 
@@ -123,7 +124,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             if predict_spect:
 
-                                fasta_mz_array, fasta_int_array = predict_spectrum(pep, min(charge-1, 3))
+                                fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge)
                                 total_ions = fasta_mz_array.size
                                 binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
                                 
@@ -169,15 +170,15 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                             xcorr_scores.append(result)
 
-                            # if scan in [109915, 71120, 107790, 114319]:
 
-                            #     plt.figure(dpi=1200)
-                            #     plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
-                            #     plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
-                            #     plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
-                            #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}.png')
-                            #     plt.plot()
-                            
+
+                            # plt.figure(dpi=1200)
+                            # plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
+                            # plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
+                            # plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
+                            # plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}.png')
+                            # plt.plot()
+                        
                     return xcorr_scores
                
     return None
@@ -202,7 +203,7 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     with multiprocessing.Pool(processes) as pool, open(f'Results/{sample_filename.split('.')[0]}_ps={predict_spect}_result.tsv', "w") as outfile:
 
         #print("Run against: ", protein_database, file=outfile)
-        print("scan\tcharge\texp_neutral_mass\tcalc_neutral_mass\txcorr\tions_matched\tions_total\tplain_peptide", file=outfile)
+        print("scan\tcharge\texp_neutral_mass\tcalc_neutral_mass\txcorr\tions_matched\tions_total\tpeptide", file=outfile)
         
         mzml_reader = mzml.read(sample_filename)
 
