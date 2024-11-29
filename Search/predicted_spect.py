@@ -1,20 +1,25 @@
 from  ms2pip.single_prediction import SinglePrediction
+from pyteomics.parser import parse
 
 def predict_spectrum(peptide : str, charge : int):
     """
     Predicts the spectrum of the peptide string
     """
-
+    peptide = parse(peptide)
     modstring = ""
 
     for idx, aa in enumerate(peptide):
 
         match aa:
-            case('c'):
+            case('cC'):
+                peptide[idx] = 'C'
                 modstring += f'{idx + 1}|Carbamidomethyl|'
 
-            case('m'):
+            case('mM'):
+                peptide[idx] = 'M'
                 modstring += f'{idx + 1}|Oxidation|'
+
+    peptide = ''.join(peptide)
 
     if modstring == "":
         modstring = "-"
