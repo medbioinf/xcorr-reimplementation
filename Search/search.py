@@ -145,12 +145,6 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                                 binned_fasta_spectrum = np.append(binned_fasta_spectrum, np.zeros(mzml_bins_size-fasta_bins_size))
             
                             corr = np.correlate(shifted_binned_mzml_spectrum, binned_fasta_spectrum, "valid")
-
-                            # if scan in [109915, 71120, 107790, 114319]:
-                            #     plt.figure(dpi=1000)
-                            #     plt.plot(corr, linewidth=0.03, color="r")
-                            #     plt.title(f'Scan: {scan} Corr') 
-                            #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}_corr.png')
                             
                             zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
                             corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
@@ -166,18 +160,8 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                                     matches += 1
 
                             result = [scan, charge, np.round(mass_mzml, 6), calc_neutral_mass, xcorr_score, matches, total_ions,  pep] 
-                            #print(result)
 
                             xcorr_scores.append(result)
-
-
-
-                            # plt.figure(dpi=1200)
-                            # plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
-                            # plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
-                            # plt.title(f'Scan: {scan} Score: {xcorr_score}')                       
-                            # plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}.png')
-                            # plt.plot()
                         
                     return xcorr_scores
                
@@ -202,7 +186,6 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
 
     with multiprocessing.Pool(processes) as pool, open(f'Results/{sample_filename.split('.')[0]}_ps={predict_spect}_result.tsv', "w") as outfile:
 
-        #print("Run against: ", protein_database, file=outfile)
         print("scan\tcharge\texp_neutral_mass\tcalc_neutral_mass\txcorr\tions_matched\tions_total\tpeptide", file=outfile)
         
         mzml_reader = mzml.read(sample_filename)

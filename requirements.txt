@@ -4,3 +4,4 @@ numpy
 lxml
 ms2pip
 wakepy
+pandas

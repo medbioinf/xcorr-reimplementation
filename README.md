@@ -16,7 +16,7 @@ conda env create -f environment.yml
 conda activate xcorr-reimplementation
 
 #Run
-python cli.py [OPTIONS] SAMPLE_FILENAME PROTEIN_DATABASE
+python xcorrcli.py [OPTIONS] SAMPLE_FILENAME PROTEIN_DATABASE
 ```
 
 ### Arguments
