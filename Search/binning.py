@@ -4,8 +4,29 @@ import math
 
 def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
     """
-    Bins spectra
+    Bins spectra and returns their binned arrays.
+
+    Parameters
+    ----------
+    mz_array : ndarray
+        Array with m/z values
+
+    intensity_array : ndarray
+        Intensity array for the corresponding m/z array
+    
+    theo_spect : bool
+        Is the m/z array a theoretical spectrum?
+        (In this case intensity array is not provided.)
+
+    bin_width : float
+        Size of the bins for binning
+
+    Returns
+    -------
+    ndarray
+        The binned spectrum
     """
+    
     bins_filled = np.zeros(min(math.ceil(mz_array[mz_array.size - 1] / bin_width), int(2000 / bin_width)) + 1)
 
     if theo_spect:

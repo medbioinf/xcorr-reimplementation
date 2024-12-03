@@ -3,8 +3,23 @@ from pyteomics.parser import parse
 
 def predict_spectrum(peptide : str, charge : int):
     """
-    Predicts the spectrum of the peptide string
+    Parses a pyteomics modX type peptide string, generates a ms2pip style formatted
+    modification string and predicts the spectrum of the peptide.
+
+    Parameters
+    ----------
+    peptide : str
+        peptide string, in modX pyteomics format
+    charge : int
+        charge state
+
+    Returns
+    -------
+    (ndarray, ndarray)
+        Tuple, first ndarray are the predicted m/z values and the second
+        are the corresponding intensities.
     """
+    
     peptide = parse(peptide)
     modstring = ""
 
