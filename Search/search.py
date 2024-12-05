@@ -134,7 +134,10 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                     mzml_mz_array = mzml_entry["m/z array"]
                     mzml_intensity_array = mzml_entry["intensity array"]
 
-                    binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array)
+                    if predict_spect:
+                        binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array, spect_type=1)
+                    else:
+                        binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array, spect_type=2)
 
                     mzml_bins_size = binned_mzml_spectrum.size 
                     
@@ -156,13 +159,13 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                                 fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge)
                                 total_ions = fasta_mz_array.size
-                                binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array)
+                                binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array, spect_type=1)
                                 
                             else:
                                 
                                 fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=min(charge-1, 3))), key = float))
                                 total_ions = fasta_mz_array.size
-                                binned_fasta_spectrum = binning(fasta_mz_array, theo_spect=True)
+                                binned_fasta_spectrum = binning(fasta_mz_array)
     
                             fasta_bins_size = binned_fasta_spectrum.size
 
@@ -173,14 +176,14 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             elif fasta_bins_size < mzml_bins_size:
 
                                 binned_fasta_spectrum = np.append(binned_fasta_spectrum, np.zeros(mzml_bins_size-fasta_bins_size))
-            
+
                             corr = np.correlate(shifted_binned_mzml_spectrum, binned_fasta_spectrum, "valid")
                             
                             zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
                             corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
                             mean_corr = np.mean(corr) #Background similarity
                             
-                            xcorr_score = np.round(zeroshift_corr - mean_corr, 4) #Xcorr score
+                            xcorr_score = np.round((zeroshift_corr - mean_corr) / 10000, 4) #Xcorr score
 
                             matches = 0
 

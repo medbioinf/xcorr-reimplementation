@@ -2,7 +2,7 @@ import numpy as np
 import math
 
 
-def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
+def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
     """
     Bins spectra and returns their binned arrays.
 
@@ -14,9 +14,10 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
     intensity_array : ndarray
         Intensity array for the corresponding m/z array
     
-    theo_spect : bool
-        Is the m/z array a theoretical spectrum?
-        (In this case intensity array is not provided.)
+    spect_type : int
+        0 = Theoretical Spectrum,
+        1 = Predicted Spectrum,
+        2 = Experimental Spectrum
 
     bin_width : float
         Size of the bins for binning
@@ -27,42 +28,67 @@ def binning(mz_array, intensity_array=None, theo_spect=False, bin_width=0.02):
         The binned spectrum
     """
     
-    bins_filled = np.zeros(min(math.ceil(mz_array[mz_array.size - 1] / bin_width), int(2000 / bin_width)) + 1)
+    bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1) 
 
-    if theo_spect:
+    if spect_type == 0:
 
         for mass in mz_array:
-            
-            #if 200 <= mass <= 2000:
-            if mass <= 2000:
 
-                index = int(mass // bin_width)
-                bins_filled[index] = 1
+            index = int(mass // bin_width)
+            bins_filled[index] = 50.0
 
-                if index - 1 != -1:
-                    bins_filled[index - 1] = max(bins_filled[index - 1], 0.5)
+            if index - 1 != -1:
+                bins_filled[index - 1] = max(bins_filled[index - 1], 25.0)
 
-                bins_filled[index + 1] = max(bins_filled[index + 1], 0.5)
+            bins_filled[index + 1] = max(bins_filled[index + 1], 25.0)
+
+        return bins_filled
     
-    else:
-        
-        for idx, mass in enumerate(mz_array):
-            if  mass > 2000:
-                intensity_array[idx] = 0.0
+    elif spect_type == 1:
 
-        #Normalised intensity array 0-1
-        intensity_array = intensity_array  / np.max(intensity_array)
-
-        #Get top 100 intensities
-        top_hundred_intensities = -np.sort(-intensity_array)[:min(100, intensity_array.size)]
+        intensity_array = 50 * (intensity_array  / np.max(intensity_array))
 
         for mass, intensity in zip(mz_array, intensity_array):
             
-            #Check if mass between 200 and 2000 and belongs to the top 100 intensities
-            if intensity in top_hundred_intensities and mass <= 2000:
-
+            if mass <= 2000:
+                
                 index = int(mass // bin_width)
                 bins_filled[index] = max(bins_filled[index], intensity)
+
+        return bins_filled
+    
+
+    elif spect_type == 2:
+
+        intensity_array = np.sqrt(intensity_array)
+
+        #Get top 100 intensities
+        #top_hundred_intensities = -np.sort(-intensity_array)[:min(100, intensity_array.size)]
+
+        for mass, intensity in zip(mz_array, intensity_array):
+            
+            index = int(mass // bin_width)
+            bins_filled[index] = max(bins_filled[index], intensity)
+
+        highest_ion = bins_filled.size 
+        num_wins = 10
+        win_size = int(highest_ion/num_wins) + 1
+
+        norm_bins = np.array([]) 
+
+        for i in range(0, len(bins_filled), win_size): 
+            win = bins_filled[i:i + win_size]
+
+            if np.max(win) != 0:
+                win = 50 * (win  / np.max(win))
+
+            norm_bins = np.append(norm_bins, win)
         
-    return bins_filled
+        del bins_filled
+
+        return norm_bins
+    
+
+    else:
+        raise Exception("Not a valid spect_type")
 
