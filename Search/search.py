@@ -106,97 +106,117 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         spect_id = mzml_entry["id"]
         scan = int(spect_id.split("scan=")[1])
 
+        for precursor in mzml_entry["precursorList"]["precursor"]:
 
-        if scan in scanlist:
+            for sel_ion in precursor["selectedIonList"]["selectedIon"]:
 
-            for precursor in mzml_entry["precursorList"]["precursor"]:
+                m_z = sel_ion["selected ion m/z"]
+                charge = sel_ion["charge state"]
 
-                for sel_ion in precursor["selectedIonList"]["selectedIon"]:
+                mass_mzml = masstocharge_to_dalton(m_z, charge)
+                lower, upper = tolerance_bounds(mass_mzml)
 
-                    m_z = sel_ion["selected ion m/z"]
-                    charge = sel_ion["charge state"]
+                lower_index = binary_search(pep_index, lower, list_length)
 
-                    mass_mzml = masstocharge_to_dalton(m_z, charge)
-                    lower, upper = tolerance_bounds(mass_mzml)
+                if lower_index == -1:
+                    return None
 
-                    lower_index = binary_search(pep_index, lower, list_length)
+                upper_index = binary_search(pep_index, upper, list_length)
 
-                    if lower_index == -1:
-                        return None
+                if upper_index == -1:
+                    upper_index = list_length - 1
 
-                    upper_index = binary_search(pep_index, upper, list_length)
+                pep_index_slice = pep_index[lower_index:upper_index]
 
-                    if upper_index == -1:
-                        upper_index = list_length - 1
+                mzml_mz_array = mzml_entry["m/z array"]
+                mzml_intensity_array = mzml_entry["intensity array"]
 
-                    pep_index_slice = pep_index[lower_index:upper_index]
+                if predict_spect:
+                    binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array, spect_type=1)
+                else:
+                    binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array, spect_type=2)
 
-                    mzml_mz_array = mzml_entry["m/z array"]
-                    mzml_intensity_array = mzml_entry["intensity array"]
+                mzml_bins_size = binned_mzml_spectrum.size 
+                
+                #Append shift size on one of the arrays for shifted correlation
+                shifted_binned_mzml_spectrum = np.insert(binned_mzml_spectrum, 0, np.zeros(int(SHIFT / 0.02)))
+                shifted_binned_mzml_spectrum = np.append(shifted_binned_mzml_spectrum, np.zeros(int(SHIFT / 0.02)))
 
-                    if predict_spect:
-                        binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array, spect_type=1)
-                    else:
-                        binned_mzml_spectrum = binning(mzml_mz_array, mzml_intensity_array, spect_type=2)
+                xcorr_scores = []
+                
+                for pepts in pep_index_slice:
 
-                    mzml_bins_size = binned_mzml_spectrum.size 
-                    
-                    #Append shift size on one of the arrays for shifted correlation
-                    shifted_binned_mzml_spectrum = np.insert(binned_mzml_spectrum, 0, np.zeros(int(SHIFT / 0.02)))
-                    shifted_binned_mzml_spectrum = np.append(shifted_binned_mzml_spectrum, np.zeros(int(SHIFT / 0.02)))
+                    calc_neutral_mass = np.round(pepts[0], 6)
 
-                    xcorr_scores = []
-                    
-                    for pepts in pep_index_slice:
+                    for pep in pepts[1]:
 
-                        calc_neutral_mass = np.round(pepts[0], 6)
+                        total_ions = 0
 
-                        for pep in pepts[1]:
+                        if predict_spect:
 
-                            total_ions = 0
-
-                            if predict_spect:
-
-                                fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge)
-                                total_ions = fasta_mz_array.size
-                                binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array, spect_type=1)
-                                
-                            else:
-                                
-                                fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=min(charge-1, 3))), key = float))
-                                total_ions = fasta_mz_array.size
-                                binned_fasta_spectrum = binning(fasta_mz_array)
-    
-                            fasta_bins_size = binned_fasta_spectrum.size
-
-                            if mzml_bins_size < fasta_bins_size:
-
-                                binned_fasta_spectrum = binned_fasta_spectrum[:mzml_bins_size]
-
-                            elif fasta_bins_size < mzml_bins_size:
-
-                                binned_fasta_spectrum = np.append(binned_fasta_spectrum, np.zeros(mzml_bins_size-fasta_bins_size))
-
-                            corr = np.correlate(shifted_binned_mzml_spectrum, binned_fasta_spectrum, "valid")
+                            fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge)
+                            total_ions = fasta_mz_array.size
+                            binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array, spect_type=1)
                             
-                            zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
-                            corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
-                            mean_corr = np.mean(corr) #Background similarity
+                        else:
                             
-                            xcorr_score = np.round((zeroshift_corr - mean_corr) / 10000, 4) #Xcorr score
+                            fasta_mz_array = np.array(sorted(list(fragments(pep, maxcharge=min(charge-1, 3))), key = float))
+                            total_ions = fasta_mz_array.size
+                            binned_fasta_spectrum = binning(fasta_mz_array)
 
-                            matches = 0
+                        fasta_bins_size = binned_fasta_spectrum.size
 
-                            for mzmlbin, fastabin in zip(binned_mzml_spectrum, binned_fasta_spectrum): #Count matches
+                        if mzml_bins_size < fasta_bins_size:
 
-                                if mzmlbin > 0 and fastabin > 0:
-                                    matches += 1
+                            binned_fasta_spectrum = binned_fasta_spectrum[:mzml_bins_size]
 
-                            result = [scan, charge, np.round(mass_mzml, 6), calc_neutral_mass, xcorr_score, matches, total_ions,  pep] 
+                        elif fasta_bins_size < mzml_bins_size:
 
-                            xcorr_scores.append(result)
+                            binned_fasta_spectrum = np.append(binned_fasta_spectrum, np.zeros(mzml_bins_size-fasta_bins_size))
+
+                        corr = np.correlate(shifted_binned_mzml_spectrum, binned_fasta_spectrum, "valid")
                         
-                    return xcorr_scores
+                        # if scan in [71120]:
+
+                        #     plt.figure(dpi=1200)
+                        #     plt.plot(corr, linewidth=0.07, color='b')    
+                        #     plt.title(f'Scan {scan} corr array ')    
+                        #     plt.xlabel("Index") 
+                        #     plt.ylabel("Correlation")                  
+                        #     plt.savefig(f'Plots/corr_{scan}_ps={predict_spect}.png')
+
+
+                        zeroshift_corr = corr[(corr.size // 2)] #Similarity at 0 offset
+                        corr = np.delete(corr, (corr.size // 2)) #Delete similarity on Shift=0 before calculating background similarity
+                        mean_corr = np.mean(corr) #Background similarity
+                        
+                        if predict_spect:
+                            xcorr_score = np.round((zeroshift_corr - mean_corr) / 500, 4) #Xcorr score
+                        else:
+                            xcorr_score = np.round((zeroshift_corr - mean_corr) / 10000, 4) 
+
+                        matches = 0
+
+                        for mzmlbin, fastabin in zip(binned_mzml_spectrum, binned_fasta_spectrum): #Count matches
+
+                            if mzmlbin > 0 and fastabin > 0:
+                                matches += 1
+
+                        result = [scan, charge, np.round(mass_mzml, 6), calc_neutral_mass, xcorr_score, matches, total_ions,  pep] 
+
+                        # if scan in [71120]:
+
+                        #     plt.figure(dpi=1200)
+                        #     plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
+                        #     plt.plot(np.negative(binned_fasta_spectrum), linewidth=0.03, color='r')
+                        #     plt.title(f'Scan: {scan} Score: {xcorr_score}')
+                        #     plt.xlabel("Binned m/z")
+                        #     plt.ylabel("Intensity")                       
+                        #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}.png')
+
+                        xcorr_scores.append(result)
+                    
+                return xcorr_scores
                
     return None
 

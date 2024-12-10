@@ -27,10 +27,10 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
     ndarray
         The binned spectrum
     """
-    
-    bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1) 
 
     if spect_type == 0:
+
+        bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1) 
 
         for mass in mz_array:
 
@@ -46,6 +46,8 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
     
     elif spect_type == 1:
 
+        bins_filled = np.zeros(min(math.ceil(mz_array[mz_array.size - 1] / bin_width), int(2000 / 0.02)) + 1) 
+
         intensity_array = 50 * (intensity_array  / np.max(intensity_array))
 
         for mass, intensity in zip(mz_array, intensity_array):
@@ -60,10 +62,9 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
 
     elif spect_type == 2:
 
-        intensity_array = np.sqrt(intensity_array)
+        bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1) 
 
-        #Get top 100 intensities
-        #top_hundred_intensities = -np.sort(-intensity_array)[:min(100, intensity_array.size)]
+        intensity_array = np.sqrt(intensity_array)
 
         for mass, intensity in zip(mz_array, intensity_array):
             
@@ -84,11 +85,17 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
 
             norm_bins = np.append(norm_bins, win)
         
+        
         del bins_filled
+        #Get top 100 intensities
+        # top_hundred_intensities = -np.sort(-norm_bins)[:min(100, norm_bins.size)]
+
+        # for idx, intensity in enumerate(norm_bins):
+        #     if intensity not in top_hundred_intensities:
+        #         norm_bins[idx] = 0
 
         return norm_bins
     
-
     else:
         raise Exception("Not a valid spect_type")
 
