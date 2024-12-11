@@ -2,6 +2,6 @@ typer
 pyteomics
 numpy
 lxml
-ms2pip
+ms2pip == 3.13.0
 wakepy
 pandas
