@@ -100,11 +100,11 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
         Returns the calculated results, if nothing was found, none is returned.
         
     """
-
     if mzml_entry["ms level"] == 2:
 
         spect_id = mzml_entry["id"]
         scan = int(spect_id.split("scan=")[1])
+
 
         for precursor in mzml_entry["precursorList"]["precursor"]:
 
@@ -191,7 +191,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                         mean_corr = np.mean(corr) #Background similarity
                         
                         if predict_spect:
-                            xcorr_score = np.round((zeroshift_corr - mean_corr) / 1000, 4) #Xcorr score
+                            xcorr_score = np.round((zeroshift_corr - mean_corr) / 10000, 4) #Xcorr score
                         else:
                             xcorr_score = np.round((zeroshift_corr - mean_corr) / 10000, 4) 
 
@@ -204,7 +204,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                         result = [scan, charge, np.round(mass_mzml, 6), calc_neutral_mass, xcorr_score, matches, total_ions,  pep] 
 
-                        # if scan in [130051, 129688, 71120, 138707]:
+                        # if scan in [71120]:
 
                         #     plt.figure(dpi=1200)
                         #     plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    

@@ -57,8 +57,25 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
                 index = int(mass // bin_width)
                 bins_filled[index] = max(bins_filled[index], intensity)
 
+        # highest_ion = bins_filled.size 
+        # num_wins = 10
+        # win_size = int(highest_ion/num_wins) + 1
+
+        # norm_bins = np.array([]) 
+
+        # for i in range(0, len(bins_filled), win_size): 
+        #     win = bins_filled[i:i + win_size]
+
+        #     if np.max(win) != 0:
+        #         win = 50 * (win  / np.max(win))
+
+        #     norm_bins = np.append(norm_bins, win)
+        
+        
+        # del bins_filled
+
+        # return norm_bins
         return bins_filled
-    
 
     elif spect_type == 2:
 
