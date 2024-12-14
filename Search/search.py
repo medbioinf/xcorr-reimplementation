@@ -38,7 +38,7 @@ def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     Returns
     -------
     list
-        Sorted eptide index list
+        Sorted Peptide index list
     """
 
     print("Creating Peptide Index...")

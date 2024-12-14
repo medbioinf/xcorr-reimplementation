@@ -21,6 +21,11 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
 
     bin_width : float
         Size of the bins for binning
+    
+    Raises
+    ------
+    Exception 
+        If not a valid spect_type
 
     Returns
     -------
@@ -30,7 +35,7 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
 
     if spect_type == 0:
 
-        bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1) 
+        bins_filled = np.zeros(math.ceil(np.max(mz_array) / bin_width) + 1) 
 
         for mass in mz_array:
 
@@ -46,7 +51,7 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
     
     elif spect_type == 1:
 
-        bins_filled = np.zeros(min(math.ceil(mz_array[mz_array.size - 1] / bin_width), int(2000 / 0.02)) + 1) 
+        bins_filled = np.zeros(min(math.ceil(np.max(mz_array) / bin_width), int(2000 / 0.02)) + 1)
 
         intensity_array = 50 * (intensity_array  / np.max(intensity_array))
 
@@ -57,29 +62,28 @@ def binning(mz_array, intensity_array=None, spect_type=0, bin_width=0.02):
                 index = int(mass // bin_width)
                 bins_filled[index] = max(bins_filled[index], intensity)
 
-        # highest_ion = bins_filled.size 
-        # num_wins = 10
-        # win_size = int(highest_ion/num_wins) + 1
+        highest_ion = bins_filled.size 
+        num_wins = 10
+        win_size = int(highest_ion/num_wins) + 1
 
-        # norm_bins = np.array([]) 
+        norm_bins = np.array([]) 
 
-        # for i in range(0, len(bins_filled), win_size): 
-        #     win = bins_filled[i:i + win_size]
+        for i in range(0, len(bins_filled), win_size): 
+            win = bins_filled[i:i + win_size]
 
-        #     if np.max(win) != 0:
-        #         win = 50 * (win  / np.max(win))
+            if np.max(win) != 0:
+                win = 50 * (win  / np.max(win))
 
-        #     norm_bins = np.append(norm_bins, win)
+            norm_bins = np.append(norm_bins, win)
         
         
-        # del bins_filled
+        del bins_filled
 
-        # return norm_bins
-        return bins_filled
+        return norm_bins
 
     elif spect_type == 2:
 
-        bins_filled = np.zeros(math.ceil(mz_array[mz_array.size - 1] / bin_width) + 1) 
+        bins_filled = np.zeros(math.ceil(np.max(mz_array) / bin_width) + 1) 
 
         intensity_array = np.sqrt(intensity_array)
 
