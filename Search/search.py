@@ -25,6 +25,7 @@ PEPTIDE_MIN_LENGTH = 6
 PEPTIDE_MAX_LENGTH = 50
 MAX_MISSED_CLEAVAGES = 2
 SHIFT = 75
+MODEL = "HCD"
 
 def create_pept_index(fasta_content: TextIO) -> List[Tuple[float, Tuple[str]]]:
     """ 
@@ -154,7 +155,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
 
                         if predict_spect:
 
-                            fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge)
+                            fasta_mz_array, fasta_int_array = predict_spectrum(pep, charge, MODEL)
                             total_ions = fasta_mz_array.size
                             binned_fasta_spectrum = binning(fasta_mz_array, fasta_int_array, spect_type=1)
                             
@@ -202,9 +203,11 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                             if mzmlbin > 0 and fastabin > 0:
                                 matches += 1
 
-                        result = [scan, charge, np.round(mass_mzml, 6), calc_neutral_mass, xcorr_score, matches, total_ions,  pep] 
+                        matched_total_ratio = np.round(matches / total_ions, 6)
 
-                        # if scan in [71120]:
+                        result = [scan, charge, np.round(mass_mzml, 6), calc_neutral_mass, xcorr_score, matches, total_ions, matched_total_ratio, pep] 
+
+                        # if scan in [71120, 130781, 131364]:
 
                         #     plt.figure(dpi=1200)
                         #     plt.plot(binned_mzml_spectrum, linewidth=0.03, color='b')    
@@ -212,7 +215,7 @@ def identification(mzml_entry, pep_index, list_length, predict_spect, scanlist):
                         #     plt.title(f'Scan: {scan} Score: {xcorr_score}')
                         #     plt.xlabel("Binned m/z")
                         #     plt.ylabel("Intensity")                       
-                        #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}.png')
+                        #     plt.savefig(f'Plots/scan_{scan}_ps={predict_spect}_{MODEL}.png')
 
                         xcorr_scores.append(result)
                     
@@ -237,9 +240,9 @@ def main(sample_filename : str, protein_database : str, processes : int, spectra
     smallindex = pd.read_table("smallindex.txt", sep=' ')
     scanlist = [scan for scan in smallindex['scan']]
 
-    with multiprocessing.Pool(processes) as pool, open(f'Results/{sample_filename.split('.')[0]}_ps={predict_spect}_result.tsv', "w") as outfile:
+    with multiprocessing.Pool(processes) as pool, open(f'Results/{sample_filename.split('.')[0]}_ps={predict_spect}_result_{MODEL}.tsv', "w") as outfile:
 
-        print("scan\tcharge\texp_neutral_mass\tcalc_neutral_mass\txcorr\tions_matched\tions_total\tpeptide", file=outfile)
+        print("scan\tcharge\texp_neutral_mass\tcalc_neutral_mass\txcorr\tions_matched\tions_total\tmatched_total_ratio\tpeptide", file=outfile)
         
         mzml_reader = mzml.read(sample_filename)
 

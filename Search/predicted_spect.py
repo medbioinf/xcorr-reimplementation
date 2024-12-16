@@ -1,7 +1,7 @@
 from  ms2pip.single_prediction import SinglePrediction
 from pyteomics.parser import parse
 
-def predict_spectrum(peptide : str, charge : int):
+def predict_spectrum(peptide : str, charge : int, model : str):
     """
     Parses a pyteomics modX type peptide string, generates a ms2pip style formatted
     modification string and predicts the spectrum of the peptide.
@@ -43,7 +43,7 @@ def predict_spectrum(peptide : str, charge : int):
 
     ms2pip_sp = SinglePrediction(modification_strings=["Carbamidomethyl,57.021464,opt,C", "Oxidation,15.994915,opt,M"])
 
-    mz, intensity, _ = ms2pip_sp.predict(peptide, modstring, charge)
+    mz, intensity, _ = ms2pip_sp.predict(peptide, modstring, charge, model)
 
     del ms2pip_sp
     
